@@ -5,7 +5,8 @@ class ContainerCam extends StatelessWidget {
   final double containerWidth;
   final double containerHeight;
 
-  ContainerCam({
+  const ContainerCam({
+    super.key,
     required this.singleElement,
     required this.containerWidth,
     required this.containerHeight,
@@ -16,9 +17,9 @@ class ContainerCam extends StatelessWidget {
     return Container(
       width: containerWidth,
       height: containerHeight,
-      padding: EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(8.0),
       decoration: BoxDecoration(
-        color: Color(0xFF333333),
+        color: const Color(0xFF333333),
         shape: BoxShape.rectangle,
         borderRadius: BorderRadius.circular(13),
         boxShadow: [

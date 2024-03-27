@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_joystick/flutter_joystick.dart';
-import 'package:roffinspection/MainMenu.dart';
 
 const ballSize = 20.0;
 const step = 10.0;
 
-class MainPage extends StatelessWidget {
-  const MainPage({Key? key}) : super(key: key);
+class JoystickExpWidget extends StatelessWidget {
+  const JoystickExpWidget({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -45,14 +44,6 @@ class MainPage extends StatelessWidget {
             },
             child: const Text('Square Joystick'),
           ),
-          ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ControlPage()),
-                );
-              },
-              child: Text("Geri dön"))
         ],
       ),
     );
@@ -104,11 +95,12 @@ class _JoystickExampleState extends State<JoystickExample> {
             Align(
               alignment: const Alignment(0, 0.8),
               child: Joystick(
-                mode: _joystickMode,
+                mode: JoystickMode.vertical,
                 listener: (details) {
                   setState(() {
                     _x = _x + step * details.x;
                     _y = _y + step * details.y;
+                    print(_y);
                   });
                 },
               ),
