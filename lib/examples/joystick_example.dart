@@ -100,7 +100,6 @@ class _JoystickExampleState extends State<JoystickExample> {
                   setState(() {
                     _x = _x + step * details.x;
                     _y = _y + step * details.y;
-                    print(_y);
                   });
                 },
               ),
