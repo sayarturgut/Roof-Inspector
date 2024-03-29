@@ -44,16 +44,16 @@ class _ControlPageState extends State<ControlPage> {
         onPressed: () {},
         child: Row(
           children: [
-            Icon(
-              Icons.cast_connected_outlined,
-              color: mainYellow,
+            const Icon(
+              Icons.cast_outlined,
+              color: Colors.red,
             ),
             SizedBox(
               height: context.customHeigthValue(0.01),
               width: context.customWidthValue(0.01),
             ),
             Text(
-              'Connect',
+              'Disconnect',
               style: GoogleFonts.openSans(
                 textStyle: TextStyle(
                   color: mainYellow,
@@ -139,40 +139,37 @@ class _ControlPageState extends State<ControlPage> {
               child: buttonSetRow(context),
             ),
           ),
+          SizedBox(
+            height: context.customHeigthValue(0.03),
+            width: context.customWidthValue(0.03),
+          ),
           GestureDetector(
-            onHorizontalDragUpdate: (details) {
-              double xThreshold = 20.0;
-              if (details.delta.dx.abs() > details.delta.dy.abs() &&
-                  details.delta.dx.abs() > xThreshold) {
-                if (details.delta.dx > 0) {
-                  snackBar(context, 'Kamera Sola Donduruluyor');
-                } else {
-                  snackBar(context, 'Kamera Saga Donduruluyor');
-                }
+            onHorizontalDragEnd: (details) {
+              if (details.primaryVelocity! > 0) {
+                snackBar(context, 'Camera is being turned to the left');
+              } else if (details.primaryVelocity! < 0) {
+                snackBar(context, 'Camera is being turned to the right');
               }
             },
-            onVerticalDragUpdate: (details) {
-              double yThreshold = 20.0;
-              if (details.delta.dy.abs() > details.delta.dx.abs() &&
-                  details.delta.dy.abs() > yThreshold) {
-                if (details.delta.dy > 0) {
-                  snackBar(context, 'Kamera Yukariya Donduruluyor');
-                } else {
-                  snackBar(context, 'Kamera Asagiya Donduruluyor');
-                }
+            onVerticalDragEnd: (details) {
+              if (details.primaryVelocity! > 0) {
+                snackBar(context, 'Camera is being turned to the up');
+              } else if (details.primaryVelocity! < 0) {
+                snackBar(context, 'Camera is being turned to the down');
               }
             },
             child: SizedBox(
               height: context.customHeigthValue(0.65),
               width: context.customWidthValue(0.65),
-              child: Card(
-                child: Container(
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(30),
-                        border: Border.all(color: mainYellow)),
-                    child: Image(
-                      image: AssetImage('example_image'.toPng),
-                    )),
+              child: Padding(
+                padding: const EdgeInsets.all(3.0),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(50),
+                  child: Image(
+                    fit: BoxFit.fill,
+                    image: AssetImage('damaged_roof'.toJpg),
+                  ),
+                ),
               ),
             ),
           ),
@@ -193,7 +190,9 @@ class _ControlPageState extends State<ControlPage> {
               borderRadius: BorderRadius.circular(30),
               border: Border.all(color: mainYellow)),
           child: ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              snackBar(context, 'Video Recording has started');
+            },
             child: Row(
               children: [
                 Icon(
@@ -224,7 +223,9 @@ class _ControlPageState extends State<ControlPage> {
               borderRadius: BorderRadius.circular(30),
               border: Border.all(color: mainYellow)),
           child: ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              snackBar(context, 'Video Recording has stoped');
+            },
             child: Row(
               children: [
                 Icon(
@@ -255,7 +256,9 @@ class _ControlPageState extends State<ControlPage> {
               borderRadius: BorderRadius.circular(30),
               border: Border.all(color: mainYellow)),
           child: ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              snackBar(context, 'Photo has been taken and saved.');
+            },
             child: Row(
               children: [
                 Icon(
@@ -316,7 +319,7 @@ class _ControlPageState extends State<ControlPage> {
   void snackBar(BuildContext context, String text) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        duration: const Duration(milliseconds: 500),
+        duration: const Duration(seconds: 2),
         content: Text(
           text,
           textAlign: TextAlign.center,

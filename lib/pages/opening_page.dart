@@ -13,8 +13,8 @@ class RoofInspector extends StatefulWidget {
 
 class _RoofInspectorState extends State<RoofInspector> {
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
 
     Future.delayed(const Duration(seconds: 3), () {
       Navigator.pushReplacement(
