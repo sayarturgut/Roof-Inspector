@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_joystick/flutter_joystick.dart';
 import 'package:roffinspection/constants/asset_extension.dart';
@@ -41,7 +42,9 @@ class _ControlPageState extends State<ControlPage> {
   List<Widget> appBarButtons(BuildContext context) {
     return [
       ElevatedButton(
-        onPressed: () {},
+        onPressed: () {
+          connectionDialog();
+        },
         child: Row(
           children: [
             const Icon(
@@ -66,7 +69,7 @@ class _ControlPageState extends State<ControlPage> {
       ),
       SizedBox(
         height: context.customHeigthValue(0.02),
-        width: context.customWidthValue(0.21),
+        width: context.customWidthValue(0.195),
       ),
       ElevatedButton(
         onPressed: () {},
@@ -280,6 +283,39 @@ class _ControlPageState extends State<ControlPage> {
             ),
           ),
         ),
+        SizedBox(
+          height: context.customHeigthValue(0.01),
+          width: context.customWidthValue(0.01),
+        ),
+        Container(
+          decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(color: mainYellow)),
+          child: ElevatedButton(
+            onPressed: () {
+              snackBar(context, 'The button will align');
+            },
+            child: Row(
+              children: [
+                Icon(
+                  Icons.not_interested_outlined,
+                  color: mainYellow,
+                ),
+                SizedBox(
+                  height: context.customHeigthValue(0.01),
+                  width: context.customWidthValue(0.01),
+                ),
+                Text(
+                  'NA',
+                  style: GoogleFonts.openSans(
+                    textStyle: TextStyle(
+                        color: mainYellow, fontWeight: FontWeight.bold),
+                  ),
+                )
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -310,6 +346,115 @@ class _ControlPageState extends State<ControlPage> {
                 _x = _x + step * details.x;
               });
             },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void connectionDialog() {
+    showCupertinoDialog<String>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text(
+          'Connection Settings',
+          style: TextStyle(
+            color: Color.fromARGB(255, 255, 204, 51),
+          ),
+        ),
+        content: SizedBox(
+          width: context.customWidthValue(0.4),
+          height: context.customHeigthValue(0.4),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextFormField(
+                decoration: InputDecoration(
+                  label: Text(
+                    'Enter Ip Adress',
+                    style: GoogleFonts.openSans(
+                      textStyle: TextStyle(
+                        color: mainYellow,
+                      ),
+                    ),
+                  ),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide(
+                        color: mainYellow,
+                      )),
+                ),
+              ),
+              SizedBox(
+                height: context.customHeigthValue(0.05),
+                width: context.customWidthValue(0.05),
+              ),
+              TextFormField(
+                decoration: InputDecoration(
+                  label: Text(
+                    'Enter Port',
+                    style: GoogleFonts.openSans(
+                      textStyle: TextStyle(
+                        color: mainYellow,
+                      ),
+                    ),
+                  ),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide(
+                        color: mainYellow,
+                      )),
+                ),
+              ),
+              SizedBox(
+                height: context.customHeigthValue(0.05),
+                width: context.customWidthValue(0.05),
+              ),
+              Container(
+                width: context.customWidthValue(0.15),
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(color: mainYellow)),
+                child: ElevatedButton(
+                  onPressed: () {
+                    snackBar(context, 'Settings are saved');
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.save_alt_outlined,
+                        color: mainYellow,
+                      ),
+                      SizedBox(
+                        height: context.customHeigthValue(0.01),
+                        width: context.customWidthValue(0.01),
+                      ),
+                      Text(
+                        'Save Settings',
+                        style: GoogleFonts.openSans(
+                          textStyle: TextStyle(
+                            color: mainYellow,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(context, 'OK'),
+            child: const Text(
+              'OK',
+              style: TextStyle(
+                color: Color.fromARGB(255, 255, 204, 51),
+              ),
+            ),
           ),
         ],
       ),
