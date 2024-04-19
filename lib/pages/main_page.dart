@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_joystick/flutter_joystick.dart';
+import 'package:roffinspection/Models/models.dart';
 import 'package:roffinspection/constants/asset_extension.dart';
 import 'package:roffinspection/constants/coctext_extension.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -13,11 +14,27 @@ class ControlPage extends StatefulWidget {
 }
 
 class _ControlPageState extends State<ControlPage> {
+  @override
+  void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      workPackageModalPopUp();
+    });
+    super.initState();
+  }
+
+  ///////////////////////////////////Text Controllers//////////////////////
+  final ipTextController = TextEditingController();
+  final portTextController = TextEditingController();
+  final workPackageTextController = TextEditingController();
+  final taskTextController = TextEditingController();
+  ///////////////////////////////////Colors////////////////////////////////
   final Color mainYellow = const Color.fromARGB(255, 255, 204, 51);
   final Color mainGrey = const Color.fromARGB(255, 76, 68, 68);
+  ///////////////////////////////////joystick vars.////////////////////////
   double _y = 100;
   double _x = 100;
   double step = 10.0;
+  /////////////////////////////////////////////////////////////////////////
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,7 +60,7 @@ class _ControlPageState extends State<ControlPage> {
     return [
       ElevatedButton(
         onPressed: () {
-          connectionDialog();
+          connectionSettingsModalPopUp();
         },
         child: Row(
           children: [
@@ -68,8 +85,24 @@ class _ControlPageState extends State<ControlPage> {
         ),
       ),
       SizedBox(
+        height: context.customHeigthValue(0.01),
+        width: context.customWidthValue(0.01),
+      ),
+      ElevatedButton(
+        onPressed: () {
+          workPackageModalPopUp();
+        },
+          children: [
+            Icon(
+              Icons.post_add_rounded,
+              color: mainYellow,
+            ),
+          ],
+        ),
+      ),
+      SizedBox(
         height: context.customHeigthValue(0.02),
-        width: context.customWidthValue(0.195),
+        width: context.customWidthValue(0.12),
       ),
       ElevatedButton(
         onPressed: () {},
@@ -125,58 +158,60 @@ class _ControlPageState extends State<ControlPage> {
     ];
   }
 
-  Center camViewColumn(BuildContext context) {
-    return Center(
-      child: Column(
-        children: [
-          SizedBox(
-            height: context.customHeigthValue(0.05),
-            width: context.customWidthValue(0.05),
-          ),
-          SizedBox(
-            height: context.customHeigthValue(0.115),
-            width: context.customWidthValue(0.65),
-            child: Card(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(50)),
-              child: buttonSetRow(context),
+  SingleChildScrollView camViewColumn(BuildContext context) {
+    return SingleChildScrollView(
+      child: Center(
+        child: Column(
+          children: [
+            SizedBox(
+              height: context.customHeigthValue(0.05),
+              width: context.customWidthValue(0.05),
             ),
-          ),
-          SizedBox(
-            height: context.customHeigthValue(0.03),
-            width: context.customWidthValue(0.03),
-          ),
-          GestureDetector(
-            onHorizontalDragEnd: (details) {
-              if (details.primaryVelocity! > 0) {
-                snackBar(context, 'Camera is being turned to the left');
-              } else if (details.primaryVelocity! < 0) {
-                snackBar(context, 'Camera is being turned to the right');
-              }
-            },
-            onVerticalDragEnd: (details) {
-              if (details.primaryVelocity! > 0) {
-                snackBar(context, 'Camera is being turned to the up');
-              } else if (details.primaryVelocity! < 0) {
-                snackBar(context, 'Camera is being turned to the down');
-              }
-            },
-            child: SizedBox(
-              height: context.customHeigthValue(0.65),
+            SizedBox(
+              height: context.customHeigthValue(0.115),
               width: context.customWidthValue(0.65),
-              child: Padding(
-                padding: const EdgeInsets.all(3.0),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(50),
-                  child: Image(
-                    fit: BoxFit.fill,
-                    image: AssetImage('damaged_roof'.toJpg),
+              child: Card(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(50)),
+                child: buttonSetRow(context),
+              ),
+            ),
+            SizedBox(
+              height: context.customHeigthValue(0.03),
+              width: context.customWidthValue(0.03),
+            ),
+            GestureDetector(
+              onHorizontalDragEnd: (details) {
+                if (details.primaryVelocity! > 0) {
+                  snackBar(context, 'Camera is being turned to the left');
+                } else if (details.primaryVelocity! < 0) {
+                  snackBar(context, 'Camera is being turned to the right');
+                }
+              },
+              onVerticalDragEnd: (details) {
+                if (details.primaryVelocity! > 0) {
+                  snackBar(context, 'Camera is being turned to the up');
+                } else if (details.primaryVelocity! < 0) {
+                  snackBar(context, 'Camera is being turned to the down');
+                }
+              },
+              child: SizedBox(
+                height: context.customHeigthValue(0.65),
+                width: context.customWidthValue(0.65),
+                child: Padding(
+                  padding: const EdgeInsets.all(3.0),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(50),
+                    child: Image(
+                      fit: BoxFit.fill,
+                      image: AssetImage('damaged_roof'.toJpg),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -352,111 +387,236 @@ class _ControlPageState extends State<ControlPage> {
     );
   }
 
-  void connectionDialog() {
-    showCupertinoDialog<String>(
+  void workPackageModalPopUp() {
+    showCupertinoModalPopup<String>(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: const Text(
-          'Connection Settings',
-          style: TextStyle(
-            color: Color.fromARGB(255, 255, 204, 51),
-          ),
-        ),
-        content: SizedBox(
-          width: context.customWidthValue(0.4),
-          height: context.customHeigthValue(0.4),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextFormField(
-                decoration: InputDecoration(
-                  label: Text(
-                    'Enter Ip Adress',
-                    style: GoogleFonts.openSans(
-                      textStyle: TextStyle(
-                        color: mainYellow,
-                      ),
-                    ),
-                  ),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide(
-                        color: mainYellow,
-                      )),
-                ),
-              ),
-              SizedBox(
-                height: context.customHeigthValue(0.05),
-                width: context.customWidthValue(0.05),
-              ),
-              TextFormField(
-                decoration: InputDecoration(
-                  label: Text(
-                    'Enter Port',
-                    style: GoogleFonts.openSans(
-                      textStyle: TextStyle(
-                        color: mainYellow,
-                      ),
-                    ),
-                  ),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide(
-                        color: mainYellow,
-                      )),
-                ),
-              ),
-              SizedBox(
-                height: context.customHeigthValue(0.05),
-                width: context.customWidthValue(0.05),
-              ),
-              Container(
-                width: context.customWidthValue(0.15),
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(30),
-                    border: Border.all(color: mainYellow)),
-                child: ElevatedButton(
-                  onPressed: () {
-                    snackBar(context, 'Settings are saved');
-                  },
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.save_alt_outlined,
-                        color: mainYellow,
-                      ),
-                      SizedBox(
-                        height: context.customHeigthValue(0.01),
-                        width: context.customWidthValue(0.01),
-                      ),
-                      Text(
-                        'Save Settings',
-                        style: GoogleFonts.openSans(
-                          textStyle: TextStyle(
-                            color: mainYellow,
-                            fontWeight: FontWeight.bold,
-                          ),
+      builder: (BuildContext context) => SingleChildScrollView(
+        child: AnimatedAlign(
+          alignment: Alignment.topCenter,
+          duration: const Duration(milliseconds: 1000),
+          curve: Easing.emphasizedDecelerate,
+          child: Padding(
+            padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Padding(
+                  padding: context.paddingLowSymetric,
+                  child: Card(
+                    child: SizedBox(
+                      width: context.customWidthValue(0.5),
+                      height: context.customHeigthValue(0.5),
+                      child: Padding(
+                        padding: context.paddingUltraULowSymetric,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            TextFormField(
+                              controller: workPackageTextController,
+                              decoration: InputDecoration(
+                                label: Text(
+                                  'Enter a Work Package Name',
+                                  style: GoogleFonts.openSans(
+                                    textStyle: TextStyle(
+                                      color: mainYellow,
+                                    ),
+                                  ),
+                                ),
+                                border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                    borderSide: BorderSide(
+                                      color: mainYellow,
+                                    )),
+                              ),
+                            ),
+                            SizedBox(
+                              height: context.customHeigthValue(0.05),
+                              width: context.customWidthValue(0.05),
+                            ),
+                            TextFormField(
+                              controller: taskTextController,
+                              decoration: InputDecoration(
+                                label: Text(
+                                  'Enter a Task Name',
+                                  style: GoogleFonts.openSans(
+                                    textStyle: TextStyle(
+                                      color: mainYellow,
+                                    ),
+                                  ),
+                                ),
+                                border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                    borderSide: BorderSide(
+                                      color: mainYellow,
+                                    )),
+                              ),
+                            ),
+                            SizedBox(
+                              height: context.customHeigthValue(0.05),
+                              width: context.customWidthValue(0.05),
+                            ),
+                            Container(
+                              width: context.customWidthValue(0.18),
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(30),
+                                  border: Border.all(color: mainYellow)),
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  snackBar(context, 'Work package is saved');
+                                  Navigator.pop(context, 'OK');
+                                },
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.save_alt_outlined,
+                                      color: mainYellow,
+                                    ),
+                                    SizedBox(
+                                      height: context.customHeigthValue(0.01),
+                                      width: context.customWidthValue(0.01),
+                                    ),
+                                    Text(
+                                      'Save Work Package',
+                                      style: GoogleFonts.openSans(
+                                        textStyle: TextStyle(
+                                          color: mainYellow,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      )
-                    ],
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.pop(context, 'OK'),
-            child: const Text(
-              'OK',
-              style: TextStyle(
-                color: Color.fromARGB(255, 255, 204, 51),
-              ),
+              ],
             ),
           ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  void connectionSettingsModalPopUp() {
+    showCupertinoModalPopup<String>(
+      context: context,
+      builder: (BuildContext context) => SingleChildScrollView(
+        child: AnimatedAlign(
+          alignment: Alignment.topCenter,
+          duration: const Duration(milliseconds: 1000),
+          curve: Easing.emphasizedDecelerate,
+          child: Padding(
+            padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Padding(
+                  padding: context.paddingLowSymetric,
+                  child: Card(
+                    child: SizedBox(
+                      width: context.customWidthValue(0.5),
+                      height: context.customHeigthValue(0.5),
+                      child: Padding(
+                        padding: context.paddingUltraULowSymetric,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            TextFormField(
+                              controller: ipTextController,
+                              decoration: InputDecoration(
+                                label: Text(
+                                  'Enter Ip Adress',
+                                  style: GoogleFonts.openSans(
+                                    textStyle: TextStyle(
+                                      color: mainYellow,
+                                    ),
+                                  ),
+                                ),
+                                border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                    borderSide: BorderSide(
+                                      color: mainYellow,
+                                    )),
+                              ),
+                            ),
+                            SizedBox(
+                              height: context.customHeigthValue(0.05),
+                              width: context.customWidthValue(0.05),
+                            ),
+                            TextFormField(
+                              controller: portTextController,
+                              decoration: InputDecoration(
+                                label: Text(
+                                  'Enter Port',
+                                  style: GoogleFonts.openSans(
+                                    textStyle: TextStyle(
+                                      color: mainYellow,
+                                    ),
+                                  ),
+                                ),
+                                border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                    borderSide: BorderSide(
+                                      color: mainYellow,
+                                    )),
+                              ),
+                            ),
+                            SizedBox(
+                              height: context.customHeigthValue(0.05),
+                              width: context.customWidthValue(0.05),
+                            ),
+                            Container(
+                              width: context.customWidthValue(0.15),
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(30),
+                                  border: Border.all(color: mainYellow)),
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  snackBar(context, 'Settings are saved');
+                                  Navigator.pop(context, 'OK');
+                                },
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.save_alt_outlined,
+                                      color: mainYellow,
+                                    ),
+                                    SizedBox(
+                                      height: context.customHeigthValue(0.01),
+                                      width: context.customWidthValue(0.01),
+                                    ),
+                                    Text(
+                                      'Save Settings',
+                                      style: GoogleFonts.openSans(
+                                        textStyle: TextStyle(
+                                          color: mainYellow,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
