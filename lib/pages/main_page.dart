@@ -92,6 +92,7 @@ class _ControlPageState extends State<ControlPage> {
         onPressed: () {
           workPackageModalPopUp();
         },
+        child: Row(
           children: [
             Icon(
               Icons.post_add_rounded,
