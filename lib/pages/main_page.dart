@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_joystick/flutter_joystick.dart';
@@ -5,6 +8,7 @@ import 'package:roffinspection/Models/models.dart';
 import 'package:roffinspection/constants/asset_extension.dart';
 import 'package:roffinspection/constants/coctext_extension.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart';
 
 class ControlPage extends StatefulWidget {
   const ControlPage({super.key});
@@ -14,6 +18,7 @@ class ControlPage extends StatefulWidget {
 }
 
 class _ControlPageState extends State<ControlPage> {
+  WorkPackageClass? workPackage;
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -64,16 +69,16 @@ class _ControlPageState extends State<ControlPage> {
         },
         child: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.cast_outlined,
-              color: Colors.red,
+              color: mainYellow,
             ),
             SizedBox(
               height: context.customHeigthValue(0.01),
               width: context.customWidthValue(0.01),
             ),
             Text(
-              'Disconnect',
+              'Connect',
               style: GoogleFonts.openSans(
                 textStyle: TextStyle(
                   color: mainYellow,
@@ -85,8 +90,8 @@ class _ControlPageState extends State<ControlPage> {
         ),
       ),
       SizedBox(
-        height: context.customHeigthValue(0.01),
-        width: context.customWidthValue(0.01),
+        height: context.customHeigthValue(0.02),
+        width: context.customWidthValue(0.02),
       ),
       ElevatedButton(
         onPressed: () {
@@ -95,7 +100,7 @@ class _ControlPageState extends State<ControlPage> {
         child: Row(
           children: [
             Icon(
-              Icons.post_add_rounded,
+              Icons.work_outlined,
               color: mainYellow,
             ),
           ],
@@ -103,7 +108,7 @@ class _ControlPageState extends State<ControlPage> {
       ),
       SizedBox(
         height: context.customHeigthValue(0.02),
-        width: context.customWidthValue(0.12),
+        width: context.customWidthValue(0.13),
       ),
       ElevatedButton(
         onPressed: () {},
@@ -142,8 +147,8 @@ class _ControlPageState extends State<ControlPage> {
               ),
             ),
             SizedBox(
-              height: context.customHeigthValue(0.01),
-              width: context.customWidthValue(0.01),
+              height: context.customHeigthValue(0.005),
+              width: context.customWidthValue(0.005),
             ),
             Icon(
               Icons.battery_5_bar_outlined,
@@ -330,11 +335,12 @@ class _ControlPageState extends State<ControlPage> {
           child: ElevatedButton(
             onPressed: () {
               snackBar(context, 'The button will align');
+              testHttp();
             },
             child: Row(
               children: [
                 Icon(
-                  Icons.not_interested_outlined,
+                  Icons.settings,
                   color: mainYellow,
                 ),
                 SizedBox(
@@ -342,7 +348,7 @@ class _ControlPageState extends State<ControlPage> {
                   width: context.customWidthValue(0.01),
                 ),
                 Text(
-                  'NA',
+                  'File Settings',
                   style: GoogleFonts.openSans(
                     textStyle: TextStyle(
                         color: mainYellow, fontWeight: FontWeight.bold),
@@ -362,7 +368,7 @@ class _ControlPageState extends State<ControlPage> {
       child: Row(
         children: [
           SizedBox(
-            width: context.customWidthValue(0.043),
+            width: context.customWidthValue(0.032),
           ),
           Joystick(
             mode: JoystickMode.vertical,
@@ -373,7 +379,7 @@ class _ControlPageState extends State<ControlPage> {
             },
           ),
           SizedBox(
-            width: context.customWidthValue(0.68),
+            width: context.customWidthValue(0.7),
           ),
           Joystick(
             mode: JoystickMode.horizontal,
@@ -416,6 +422,10 @@ class _ControlPageState extends State<ControlPage> {
                             TextFormField(
                               controller: workPackageTextController,
                               decoration: InputDecoration(
+                                prefixIcon: Icon(
+                                  Icons.work_outlined,
+                                  color: mainYellow,
+                                ),
                                 label: Text(
                                   'Enter a Work Package Name',
                                   style: GoogleFonts.openSans(
@@ -438,6 +448,10 @@ class _ControlPageState extends State<ControlPage> {
                             TextFormField(
                               controller: taskTextController,
                               decoration: InputDecoration(
+                                prefixIcon: Icon(
+                                  Icons.task_rounded,
+                                  color: mainYellow,
+                                ),
                                 label: Text(
                                   'Enter a Task Name',
                                   style: GoogleFonts.openSans(
@@ -464,6 +478,11 @@ class _ControlPageState extends State<ControlPage> {
                                   border: Border.all(color: mainYellow)),
                               child: ElevatedButton(
                                 onPressed: () {
+                                  workPackage = WorkPackageClass(
+                                      workPackage:
+                                          workPackageTextController.text,
+                                      taskName: taskTextController.text);
+                                  workPackageSend();
                                   snackBar(context, 'Work package is saved');
                                   Navigator.pop(context, 'OK');
                                 },
@@ -533,6 +552,10 @@ class _ControlPageState extends State<ControlPage> {
                             TextFormField(
                               controller: ipTextController,
                               decoration: InputDecoration(
+                                prefixIcon: Icon(
+                                  Icons.wifi_find_rounded,
+                                  color: mainYellow,
+                                ),
                                 label: Text(
                                   'Enter Ip Adress',
                                   style: GoogleFonts.openSans(
@@ -555,6 +578,10 @@ class _ControlPageState extends State<ControlPage> {
                             TextFormField(
                               controller: portTextController,
                               decoration: InputDecoration(
+                                prefixIcon: Icon(
+                                  Icons.settings_input_antenna_rounded,
+                                  color: mainYellow,
+                                ),
                                 label: Text(
                                   'Enter Port',
                                   style: GoogleFonts.openSans(
@@ -636,4 +663,23 @@ class _ControlPageState extends State<ControlPage> {
       ),
     );
   }
+
+  Future<void> testHttp() async {
+    Socket socket = await Socket.connect(
+      '192.168.1.160',
+      8088,
+    );
+
+    print('connected');
+
+    socket.listen((List<int> event) {
+      print(utf8.decode(event));
+    });
+
+    socket.add(utf8.encode('100000001'));
+
+    socket.close();
+  }
+
+  void workPackageSend() {}
 }
