@@ -50,7 +50,9 @@ class _ControlPageState extends State<ControlPage> {
   bool conStsFlag = false;
   Uint8List receivedData = Uint8List(0);
   late Socket socket;
-  String dataNew = '';
+  late Timer timer;
+  String streamingCamData = '';
+  String lastCamData = '';
   List<String> dataList = [];
   /////////////////////////////////////////////////////////////////////////
   @override
@@ -259,7 +261,7 @@ class _ControlPageState extends State<ControlPage> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(50),
                     child: Image.memory(
-                      base64Decode(dataNew),
+                      base64Decode(lastCamData),
                       fit: BoxFit.fill,
                     ),
                   ),
@@ -385,7 +387,7 @@ class _ControlPageState extends State<ControlPage> {
           child: ElevatedButton(
             onPressed: () {
               snackBar(context, 'The button will align');
-              tcpConnect();
+              checkConnectionFunc();
             },
             child: Row(
               children: [
@@ -654,7 +656,7 @@ class _ControlPageState extends State<ControlPage> {
                                   border: Border.all(color: mainYellow)),
                               child: ElevatedButton(
                                 onPressed: () {
-                                  tcpConnect();
+                                  checkConnectionFunc();
                                   snackBar(context, 'Connecting to Robot');
                                   Navigator.pop(context, 'OK');
                                 },
@@ -711,49 +713,67 @@ class _ControlPageState extends State<ControlPage> {
     );
   }
 
+  void checkConnectionFunc() async {
+    setState(() {
+      conStsFlag = true;
+    });
+    await tcpConnect(); // Hemen yeniden bağlanmayı dener
+  }
+
   Future<void> tcpConnect() async {
     String ip = ipTextController.text;
     String port = portTextController.text;
 
-    socket = await Socket.connect(
-      ip,
-      int.parse(port),
-      timeout: const Duration(seconds: 10),
-    );
-    dataNew = '';
+    try {
+      socket = await Socket.connect(
+        ip,
+        int.parse(port),
+        timeout: const Duration(seconds: 10),
+      );
 
+      socket.add(utf8.encode('1\n'));
+      takeAndPushDataFunc();
+    } catch (e) {
+      snackBar(context, 'Connection Failed.\n Error: $e');
+    }
+  }
+
+  void takeAndPushDataFunc() {
     socket.listen(
       (Uint8List event) {
-        setState(
-          () {
-            dataNew += utf8.decode(event);
-          },
-        );
+        streamingCamData += utf8.decode(event);
+        streamingCamData =
+            streamingCamData.replaceAll(RegExp(r'[^A-Za-z0-9+/=]'), '');
       },
       onDone: () {
-        socket.add(utf8.encode('0\n'));
+        if (conStsFlag) {
+          tcpReconnect();
+          lastCamData = streamingCamData;
+          streamingCamData = '';
+        }
       },
       onError: (error) {
         setState(() {
-          print("Error: $error");
           socket.close();
           socket.destroy();
           conStsFlag = false;
-          snackBar(context, 'Connected Failed');
+          snackBar(context, 'Connection Failed.\n Error: $error');
         });
       },
     );
-    snackBar(context, 'Connected Succesfully');
-    conStsFlag = true;
+  }
 
-    socket.add(utf8.encode('1\n'));
-    setState(() {});
+  void tcpReconnect() async {
+    socket.destroy();
+    await tcpConnect(); // Hemen yeniden bağlanmayı dener
   }
 
   void tcpDisconnect() {
     setState(() {
+      socket.close();
       socket.destroy();
       conStsFlag = false;
+      snackBar(context, 'Disconnected Successfully');
     });
   }
 
