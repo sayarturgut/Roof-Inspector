@@ -27,8 +27,14 @@ class _ControlPageState extends State<ControlPage> {
       ipTextController.text = '192.168.1.160';
       portTextController.text = '8088';
     });
-    startTimerFunc();
+
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    timer.cancel();
+    super.dispose();
   }
 
   ///////////////////////////////////Text Controllers//////////////////////
@@ -61,6 +67,7 @@ class _ControlPageState extends State<ControlPage> {
   /////////////////////////////////////////////////////////////////////////
   String dataRx = '';
   /////////////////////////////////////////////////////////////////////////
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -268,7 +275,8 @@ class _ControlPageState extends State<ControlPage> {
                       borderRadius: BorderRadius.circular(50),
                       child: conStsFlag
                           ? Image.memory(
-                              base64Decode(lastCamData),
+                              gaplessPlayback: true,
+                              receivedData,
                               fit: BoxFit.fill,
                             )
                           : Image(
@@ -435,7 +443,10 @@ class _ControlPageState extends State<ControlPage> {
           Joystick(
             mode: JoystickMode.vertical,
             listener: (details) {
-              robotForBacwardFunc(details);
+              _y = _y + (step * details.y);
+              realY = -(_y - oldY);
+              realY.toInt();
+              oldY = _y;
             },
           ),
           SizedBox(
@@ -444,7 +455,10 @@ class _ControlPageState extends State<ControlPage> {
           Joystick(
             mode: JoystickMode.horizontal,
             listener: (details) {
-              robotLeftRightFunc(details);
+              _x = _x + (step * details.x);
+              realX = -(_x - oldX);
+              realX.toInt();
+              oldX = _x;
             },
           ),
         ],
@@ -722,12 +736,6 @@ class _ControlPageState extends State<ControlPage> {
     );
   }
 
-  void startTimerFunc() {
-    timer = Timer.periodic(const Duration(milliseconds: 10), (timer) {
-      setState(() {});
-    });
-  }
-
   void checkConnectionFunc() async {
     setState(() {
       conStsFlag = true;
@@ -747,6 +755,9 @@ class _ControlPageState extends State<ControlPage> {
       socket.add(utf8.encode('1\n'));
       takeAndPushDataFunc();
     } catch (error) {
+      socket.close();
+      socket.destroy();
+      conStsFlag = false;
       snackBar(context, 'Connection Failed.\n Error: $error');
     }
   }
@@ -760,9 +771,9 @@ class _ControlPageState extends State<ControlPage> {
       },
       onDone: () {
         if (conStsFlag) {
-          // setState(() {});
+          setState(() {});
           tcpReconnect();
-          lastCamData = streamingCamData;
+          receivedData = base64Decode(streamingCamData);
           streamingCamData = '';
         }
       },
@@ -812,23 +823,6 @@ class _ControlPageState extends State<ControlPage> {
     } else if (details.primaryVelocity! < 0) {
       snackBar(context, 'Camera is being turned to the right');
     }
-  }
-
-  void robotLeftRightFunc(StickDragDetails details) {
-    return setState(() {
-      _x = _x + (step * details.x);
-      realX = -(_x - oldX);
-      oldX = _x;
-    });
-  }
-
-  void robotForBacwardFunc(StickDragDetails details) {
-    return setState(() {
-      _y = _y + (step * details.y);
-      realY = -(_y - oldY);
-      realY.toInt();
-      oldY = _y;
-    });
   }
 
   void handleRobotTurn() {
