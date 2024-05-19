@@ -27,6 +27,7 @@ class _ControlPageState extends State<ControlPage> {
       ipTextController.text = '192.168.1.160';
       portTextController.text = '8088';
     });
+    startTimerFunc();
     super.initState();
   }
 
@@ -45,6 +46,8 @@ class _ControlPageState extends State<ControlPage> {
   double _x = 0;
   double oldX = 0;
   double realX = 0;
+  double leftMotor = 0;
+  double rightMotor = 0;
   double step = 10.1;
   /////////////////////////////////////////////////////////////////////////
   bool conStsFlag = false;
@@ -54,6 +57,9 @@ class _ControlPageState extends State<ControlPage> {
   String streamingCamData = '';
   String lastCamData = '';
   List<String> dataList = [];
+  List<String> camDataList = [];
+  /////////////////////////////////////////////////////////////////////////
+  String dataRx = '';
   /////////////////////////////////////////////////////////////////////////
   @override
   Widget build(BuildContext context) {
@@ -259,12 +265,16 @@ class _ControlPageState extends State<ControlPage> {
                 child: Padding(
                   padding: const EdgeInsets.all(3.0),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(50),
-                    child: Image.memory(
-                      base64Decode(lastCamData),
-                      fit: BoxFit.fill,
-                    ),
-                  ),
+                      borderRadius: BorderRadius.circular(50),
+                      child: conStsFlag
+                          ? Image.memory(
+                              base64Decode(lastCamData),
+                              fit: BoxFit.fill,
+                            )
+                          : Image(
+                              image: AssetImage('damaged_roof'.toJpg),
+                              fit: BoxFit.fill,
+                            )),
                 ),
               ),
             ),
@@ -530,7 +540,6 @@ class _ControlPageState extends State<ControlPage> {
                                       workPackage:
                                           workPackageTextController.text,
                                       taskName: taskTextController.text);
-                                  workPackageSend();
                                   snackBar(context, 'Work package is saved');
                                   Navigator.pop(context, 'OK');
                                 },
@@ -713,6 +722,12 @@ class _ControlPageState extends State<ControlPage> {
     );
   }
 
+  void startTimerFunc() {
+    timer = Timer.periodic(const Duration(milliseconds: 10), (timer) {
+      setState(() {});
+    });
+  }
+
   void checkConnectionFunc() async {
     setState(() {
       conStsFlag = true;
@@ -723,18 +738,16 @@ class _ControlPageState extends State<ControlPage> {
   Future<void> tcpConnect() async {
     String ip = ipTextController.text;
     String port = portTextController.text;
-
     try {
       socket = await Socket.connect(
         ip,
         int.parse(port),
         timeout: const Duration(seconds: 10),
       );
-
       socket.add(utf8.encode('1\n'));
       takeAndPushDataFunc();
-    } catch (e) {
-      snackBar(context, 'Connection Failed.\n Error: $e');
+    } catch (error) {
+      snackBar(context, 'Connection Failed.\n Error: $error');
     }
   }
 
@@ -747,6 +760,7 @@ class _ControlPageState extends State<ControlPage> {
       },
       onDone: () {
         if (conStsFlag) {
+          // setState(() {});
           tcpReconnect();
           lastCamData = streamingCamData;
           streamingCamData = '';
@@ -777,7 +791,11 @@ class _ControlPageState extends State<ControlPage> {
     });
   }
 
-  void workPackageSend() {}
+  String packageSend() {
+    handleRobotTurn();
+    return dataRx =
+        '${conStsFlag == true ? 1 : 0}${realY.isNegative ? 0 : 1}$rightMotor$leftMotor';
+  }
 
   void camUpDownFunc(DragEndDetails details, BuildContext context) {
     if (details.primaryVelocity! > 0) {
@@ -811,5 +829,15 @@ class _ControlPageState extends State<ControlPage> {
       realY.toInt();
       oldY = _y;
     });
+  }
+
+  void handleRobotTurn() {
+    if (realX.isNegative) {
+      rightMotor = (realY.abs() - (realX / 1.5).abs()).abs();
+      leftMotor = realY.abs();
+    } else {
+      leftMotor = (realY.abs() - (realX / 1.5).abs()).abs();
+      rightMotor = realY.abs();
+    }
   }
 }
