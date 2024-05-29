@@ -12,12 +12,14 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
+  
+  syncfusion_flutter_sliders: ^25.2.6
   cupertino_icons: ^1.0.2
   svg_flutter: ^0.0.1
   flutter_joystick: ^0.0.4
   google_fonts: ^6.2.1
   http: ^1.2.1
+  network_info_plus: ^5.0.3
 dev_dependencies:
   flutter_test:
     sdk: flutter

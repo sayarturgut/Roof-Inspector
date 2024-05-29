@@ -10,7 +10,7 @@ ThemeData appTheme(BuildContext context) {
     ///////////////////////////
     elevatedButtonTheme: const ElevatedButtonThemeData(
       style: ButtonStyle(
-        elevation: MaterialStatePropertyAll(5),
+        elevation: WidgetStatePropertyAll(5),
         splashFactory: InkSplash.splashFactory,
         animationDuration: Duration(milliseconds: 250),
       ),

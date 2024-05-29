@@ -5,11 +5,14 @@ import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:syncfusion_flutter_sliders/sliders.dart';
 import 'package:flutter_joystick/flutter_joystick.dart';
 import 'package:roffinspection/Models/models.dart';
 import 'package:roffinspection/constants/asset_extension.dart';
 import 'package:roffinspection/constants/coctext_extension.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:network_info_plus/network_info_plus.dart';
 
 class ControlPage extends StatefulWidget {
   const ControlPage({super.key});
@@ -33,10 +36,12 @@ class _ControlPageState extends State<ControlPage> {
 
   @override
   void dispose() {
-    timer.cancel();
     super.dispose();
   }
 
+  /////////////////////////////////////////////////////////////////////////
+  final info = NetworkInfo();
+  String? wifiName;
   ///////////////////////////////////Text Controllers//////////////////////
   final ipTextController = TextEditingController();
   final portTextController = TextEditingController();
@@ -56,16 +61,18 @@ class _ControlPageState extends State<ControlPage> {
   double rightMotor = 0;
   double step = 10.1;
   /////////////////////////////////////////////////////////////////////////
+  late Socket socket;
   bool conStsFlag = false;
   Uint8List receivedData = Uint8List(0);
-  late Socket socket;
-  late Timer timer;
+  /////////////////////////////////////////////////////////////////////////
   String streamingCamData = '';
-  String lastCamData = '';
   List<String> dataList = [];
   List<String> camDataList = [];
   /////////////////////////////////////////////////////////////////////////
   String dataRx = '';
+  /////////////////////////////////////////////////////////////////////////
+  double horSliderValue = 90;
+  dynamic verSliderValue = 90;
   /////////////////////////////////////////////////////////////////////////
 
   @override
@@ -91,6 +98,10 @@ class _ControlPageState extends State<ControlPage> {
 
   List<Widget> appBarButtons(BuildContext context) {
     return [
+      SizedBox(
+        height: context.customHeigthValue(0.02),
+        width: context.customWidthValue(0.01),
+      ),
       conStsFlag == false
           ? ElevatedButton(
               onPressed: () {
@@ -163,7 +174,7 @@ class _ControlPageState extends State<ControlPage> {
       ),
       SizedBox(
         height: context.customHeigthValue(0.02),
-        width: context.customWidthValue(0.11),
+        width: context.customWidthValue(0.06),
       ),
       Center(
         child: AnimatedSize(
@@ -178,7 +189,7 @@ class _ControlPageState extends State<ControlPage> {
                       textStyle: const TextStyle(
                           color: Colors.green,
                           fontWeight: FontWeight.bold,
-                          fontSize: 24),
+                          fontSize: 20),
                     ),
                   )
                 : Text(
@@ -187,7 +198,7 @@ class _ControlPageState extends State<ControlPage> {
                       textStyle: const TextStyle(
                           color: Colors.red,
                           fontWeight: FontWeight.bold,
-                          fontSize: 24),
+                          fontSize: 20),
                     ),
                   ),
           ),
@@ -195,7 +206,7 @@ class _ControlPageState extends State<ControlPage> {
       ),
       SizedBox(
         height: context.customHeigthValue(0.02),
-        width: context.customWidthValue(0.16),
+        width: context.customWidthValue(0.065),
       ),
       ElevatedButton(
         onPressed: () {},
@@ -243,8 +254,95 @@ class _ControlPageState extends State<ControlPage> {
         child: Column(
           children: [
             SizedBox(
-              height: context.customHeigthValue(0.05),
-              width: context.customWidthValue(0.05),
+              width: context.customWidthValue(0.65),
+              child: SizedBox(
+                height: context.customHeigthValue(0.06),
+                width: context.customWidthValue(0.65),
+                child: Slider(
+                  value: horSliderValue,
+                  max: 180,
+                  divisions: 180,
+                  activeColor: mainYellow,
+                  inactiveColor: const Color.fromARGB(255, 91, 73, 20),
+                  onChanged: (double value) {
+                    setState(() {
+                      if (value > 85 && value < 95) {
+                        value = 90;
+                      } else if (value > 0 && value < 5) {
+                        value = 0;
+                      } else if (value > 175) {
+                        value = 180;
+                      }
+                      horSliderValue = value;
+                    });
+                  },
+                ),
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  height: context.customHeigthValue(0.65),
+                  width: context.customWidthValue(0.03),
+                ),
+                GestureDetector(
+                  onHorizontalDragEnd: (details) {
+                    camLeftRightFunc(details, context);
+                  },
+                  onVerticalDragEnd: (details) {
+                    camUpDownFunc(details, context);
+                  },
+                  child: SizedBox(
+                    height: context.customHeigthValue(0.65),
+                    width: context.customWidthValue(0.65),
+                    child: Padding(
+                      padding: const EdgeInsets.all(3.0),
+                      child: ClipRRect(
+                          borderRadius: BorderRadius.circular(50),
+                          child: conStsFlag && receivedData.isNotEmpty
+                              ? Image.memory(
+                                  gaplessPlayback: true,
+                                  receivedData,
+                                  fit: BoxFit.fill,
+                                )
+                              : Image(
+                                  image: AssetImage('damaged_roof'.toJpg),
+                                  fit: BoxFit.fill,
+                                )),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: context.customHeigthValue(0.65),
+                  width: context.customWidthValue(0.03),
+                  child: SfSlider.vertical(
+                    min: 0.0,
+                    max: 180.0,
+                    activeColor: mainYellow,
+                    inactiveColor: const Color.fromARGB(255, 91, 73, 20),
+                    value: verSliderValue,
+                    interval: 180,
+                    minorTicksPerInterval: 1,
+                    onChanged: (dynamic value) {
+                      setState(() {
+                        if (value > 85 && value < 95) {
+                          value = 90;
+                        } else if (value > 0 && value < 5) {
+                          value = 0;
+                        } else if (value > 175) {
+                          value = 180;
+                        }
+                        verSliderValue = value;
+                      });
+                    },
+                  ),
+                )
+              ],
+            ),
+            SizedBox(
+              height: context.customHeigthValue(0.01),
+              width: context.customWidthValue(0.02),
             ),
             SizedBox(
               height: context.customHeigthValue(0.115),
@@ -253,37 +351,6 @@ class _ControlPageState extends State<ControlPage> {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(50)),
                 child: buttonSetRow(context),
-              ),
-            ),
-            SizedBox(
-              height: context.customHeigthValue(0.03),
-              width: context.customWidthValue(0.03),
-            ),
-            GestureDetector(
-              onHorizontalDragEnd: (details) {
-                camLeftRightFunc(details, context);
-              },
-              onVerticalDragEnd: (details) {
-                camUpDownFunc(details, context);
-              },
-              child: SizedBox(
-                height: context.customHeigthValue(0.65),
-                width: context.customWidthValue(0.65),
-                child: Padding(
-                  padding: const EdgeInsets.all(3.0),
-                  child: ClipRRect(
-                      borderRadius: BorderRadius.circular(50),
-                      child: conStsFlag
-                          ? Image.memory(
-                              gaplessPlayback: true,
-                              receivedData,
-                              fit: BoxFit.fill,
-                            )
-                          : Image(
-                              image: AssetImage('damaged_roof'.toJpg),
-                              fit: BoxFit.fill,
-                            )),
-                ),
               ),
             ),
           ],
@@ -318,10 +385,12 @@ class _ControlPageState extends State<ControlPage> {
                   width: context.customWidthValue(0.01),
                 ),
                 Text(
-                  'Start Recording',
+                  'Start\nRecording',
                   style: GoogleFonts.openSans(
                     textStyle: TextStyle(
-                        color: mainYellow, fontWeight: FontWeight.bold),
+                        fontSize: 12,
+                        color: mainYellow,
+                        fontWeight: FontWeight.bold),
                   ),
                 )
               ],
@@ -351,10 +420,12 @@ class _ControlPageState extends State<ControlPage> {
                   width: context.customWidthValue(0.01),
                 ),
                 Text(
-                  'Stop Recording',
+                  'Stop\nRecording',
                   style: GoogleFonts.openSans(
                     textStyle: TextStyle(
-                        color: mainYellow, fontWeight: FontWeight.bold),
+                        fontSize: 12,
+                        color: mainYellow,
+                        fontWeight: FontWeight.bold),
                   ),
                 )
               ],
@@ -384,10 +455,12 @@ class _ControlPageState extends State<ControlPage> {
                   width: context.customWidthValue(0.01),
                 ),
                 Text(
-                  'Take a Photo',
+                  'Take\nPhoto',
                   style: GoogleFonts.openSans(
                     textStyle: TextStyle(
-                        color: mainYellow, fontWeight: FontWeight.bold),
+                        fontSize: 12,
+                        color: mainYellow,
+                        fontWeight: FontWeight.bold),
                   ),
                 )
               ],
@@ -405,7 +478,7 @@ class _ControlPageState extends State<ControlPage> {
           child: ElevatedButton(
             onPressed: () {
               snackBar(context, 'The button will align');
-              checkConnectionFunc();
+              // checkConnectionFunc();
             },
             child: Row(
               children: [
@@ -418,10 +491,12 @@ class _ControlPageState extends State<ControlPage> {
                   width: context.customWidthValue(0.01),
                 ),
                 Text(
-                  'File Settings',
+                  'File\nSettings',
                   style: GoogleFonts.openSans(
                     textStyle: TextStyle(
-                        color: mainYellow, fontWeight: FontWeight.bold),
+                        fontSize: 12,
+                        color: mainYellow,
+                        fontWeight: FontWeight.bold),
                   ),
                 )
               ],
@@ -434,11 +509,12 @@ class _ControlPageState extends State<ControlPage> {
 
   Positioned joystickRow(BuildContext context) {
     return Positioned(
-      top: context.customHeigthValue(0.58),
+      top: context.customHeigthValue(0.50),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           SizedBox(
-            width: context.customWidthValue(0.032),
+            width: context.customWidthValue(0.02),
           ),
           Joystick(
             mode: JoystickMode.vertical,
@@ -569,7 +645,7 @@ class _ControlPageState extends State<ControlPage> {
                                       width: context.customWidthValue(0.01),
                                     ),
                                     Text(
-                                      'Save Work Package',
+                                      'Save Work\nPackage',
                                       style: GoogleFonts.openSans(
                                         textStyle: TextStyle(
                                           color: mainYellow,
@@ -681,6 +757,7 @@ class _ControlPageState extends State<ControlPage> {
                                 onPressed: () {
                                   checkConnectionFunc();
                                   snackBar(context, 'Connecting to Robot');
+
                                   Navigator.pop(context, 'OK');
                                 },
                                 child: Row(
@@ -695,7 +772,7 @@ class _ControlPageState extends State<ControlPage> {
                                       width: context.customWidthValue(0.01),
                                     ),
                                     Text(
-                                      'Connect to Robot',
+                                      'Connect to\nRobot',
                                       style: GoogleFonts.openSans(
                                         textStyle: TextStyle(
                                           color: mainYellow,
@@ -737,10 +814,21 @@ class _ControlPageState extends State<ControlPage> {
   }
 
   void checkConnectionFunc() async {
-    setState(() {
-      conStsFlag = true;
-    });
-    await tcpConnect(); // Hemen yeniden bağlanmayı dener
+    wifiName = await info.getWifiName();
+
+    if (wifiName != null) {
+      if (wifiName!.contains('Roof')) {
+        setState(() {
+          conStsFlag = true;
+        });
+        snackBar(context, 'Connected to Robot');
+        await tcpConnect();
+      } else {
+        snackBar(context, 'Please Connect to Wi-Fi before.');
+      }
+    } else {
+      snackBar(context, 'Please Connect to Wi-Fi before.');
+    }
   }
 
   Future<void> tcpConnect() async {
@@ -774,8 +862,8 @@ class _ControlPageState extends State<ControlPage> {
           setState(() {});
           tcpReconnect();
           receivedData = base64Decode(streamingCamData);
-          streamingCamData = '';
         }
+        streamingCamData = '';
       },
       onError: (error) {
         setState(() {
@@ -790,7 +878,7 @@ class _ControlPageState extends State<ControlPage> {
 
   void tcpReconnect() async {
     socket.destroy();
-    await tcpConnect(); // Hemen yeniden bağlanmayı dener
+    await tcpConnect();
   }
 
   void tcpDisconnect() {
@@ -798,6 +886,8 @@ class _ControlPageState extends State<ControlPage> {
       socket.close();
       socket.destroy();
       conStsFlag = false;
+      streamingCamData = '';
+      receivedData = Uint8List(0);
       snackBar(context, 'Disconnected Successfully');
     });
   }
@@ -811,7 +901,6 @@ class _ControlPageState extends State<ControlPage> {
   void camUpDownFunc(DragEndDetails details, BuildContext context) {
     if (details.primaryVelocity! > 0) {
       snackBar(context, 'Camera is being turned to the up');
-      print(details.primaryVelocity! ~/ 400);
     } else if (details.primaryVelocity! < 0) {
       snackBar(context, 'Camera is being turned to the down');
     }
