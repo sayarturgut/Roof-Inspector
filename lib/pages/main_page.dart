@@ -5,7 +5,6 @@ import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:syncfusion_flutter_sliders/sliders.dart';
 import 'package:flutter_joystick/flutter_joystick.dart';
 import 'package:roffinspection/Models/models.dart';
@@ -13,6 +12,9 @@ import 'package:roffinspection/constants/asset_extension.dart';
 import 'package:roffinspection/constants/coctext_extension.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:network_info_plus/network_info_plus.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class ControlPage extends StatefulWidget {
   const ControlPage({super.key});
@@ -22,11 +24,13 @@ class ControlPage extends StatefulWidget {
 }
 
 class _ControlPageState extends State<ControlPage> {
-  WorkPackageClass? workPackage;
+  late WorkPackageClass workPackage;
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       workPackageModalPopUp();
+      alertDialog('Type Names',
+          'Please type workpackage and task names before navigating to app');
       ipTextController.text = '192.168.1.160';
       portTextController.text = '8088';
     });
@@ -50,6 +54,7 @@ class _ControlPageState extends State<ControlPage> {
   ///////////////////////////////////Colors////////////////////////////////
   final Color mainYellow = const Color.fromARGB(255, 255, 204, 51);
   final Color mainGrey = const Color.fromARGB(255, 76, 68, 68);
+  final Color darkGrey = const Color.fromARGB(255, 29, 27, 32);
   ///////////////////////////////////joystick vars.////////////////////////
   double _y = 0;
   double oldY = 0;
@@ -73,6 +78,11 @@ class _ControlPageState extends State<ControlPage> {
   /////////////////////////////////////////////////////////////////////////
   double horSliderValue = 90;
   dynamic verSliderValue = 90;
+  /////////////////////////////////////////////////////////////////////////
+  String pathOfWp = '';
+  String pathOfTask = '';
+  String pathOfPhotos = '';
+  String pathOfVideos = '';
   /////////////////////////////////////////////////////////////////////////
 
   @override
@@ -286,31 +296,23 @@ class _ControlPageState extends State<ControlPage> {
                   height: context.customHeigthValue(0.65),
                   width: context.customWidthValue(0.03),
                 ),
-                GestureDetector(
-                  onHorizontalDragEnd: (details) {
-                    camLeftRightFunc(details, context);
-                  },
-                  onVerticalDragEnd: (details) {
-                    camUpDownFunc(details, context);
-                  },
-                  child: SizedBox(
-                    height: context.customHeigthValue(0.65),
-                    width: context.customWidthValue(0.65),
-                    child: Padding(
-                      padding: const EdgeInsets.all(3.0),
-                      child: ClipRRect(
-                          borderRadius: BorderRadius.circular(50),
-                          child: conStsFlag && receivedData.isNotEmpty
-                              ? Image.memory(
-                                  gaplessPlayback: true,
-                                  receivedData,
-                                  fit: BoxFit.fill,
-                                )
-                              : Image(
-                                  image: AssetImage('damaged_roof'.toJpg),
-                                  fit: BoxFit.fill,
-                                )),
-                    ),
+                SizedBox(
+                  height: context.customHeigthValue(0.65),
+                  width: context.customWidthValue(0.65),
+                  child: Padding(
+                    padding: const EdgeInsets.all(3.0),
+                    child: ClipRRect(
+                        borderRadius: BorderRadius.circular(50),
+                        child: conStsFlag && receivedData.isNotEmpty
+                            ? Image.memory(
+                                gaplessPlayback: true,
+                                receivedData,
+                                fit: BoxFit.fill,
+                              )
+                            : Image(
+                                image: AssetImage('damaged_roof'.toJpg),
+                                fit: BoxFit.fill,
+                              )),
                   ),
                 ),
                 SizedBox(
@@ -442,6 +444,7 @@ class _ControlPageState extends State<ControlPage> {
               border: Border.all(color: mainYellow)),
           child: ElevatedButton(
             onPressed: () {
+              savePhoto();
               snackBar(context, 'Photo has been taken and saved.');
             },
             child: Row(
@@ -478,7 +481,6 @@ class _ControlPageState extends State<ControlPage> {
           child: ElevatedButton(
             onPressed: () {
               snackBar(context, 'The button will align');
-              // checkConnectionFunc();
             },
             child: Row(
               children: [
@@ -544,6 +546,7 @@ class _ControlPageState extends State<ControlPage> {
 
   void workPackageModalPopUp() {
     showCupertinoModalPopup<String>(
+      barrierDismissible: false,
       context: context,
       builder: (BuildContext context) => SingleChildScrollView(
         child: AnimatedAlign(
@@ -630,8 +633,15 @@ class _ControlPageState extends State<ControlPage> {
                                       workPackage:
                                           workPackageTextController.text,
                                       taskName: taskTextController.text);
-                                  snackBar(context, 'Work package is saved');
-                                  Navigator.pop(context, 'OK');
+                                  if (workPackage.workPackage != '' &&
+                                      workPackage.taskName != '') {
+                                    snackBar(context, 'Work package is saved');
+                                    createFolder();
+                                    Navigator.pop(context, 'OK');
+                                  } else {
+                                    alertDialog('Please Type Names.',
+                                        'Please type workpackage and task names.');
+                                  }
                                 },
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -757,7 +767,6 @@ class _ControlPageState extends State<ControlPage> {
                                 onPressed: () {
                                   checkConnectionFunc();
                                   snackBar(context, 'Connecting to Robot');
-
                                   Navigator.pop(context, 'OK');
                                 },
                                 child: Row(
@@ -813,22 +822,50 @@ class _ControlPageState extends State<ControlPage> {
     );
   }
 
+  void alertDialog(String title, String content) {
+    showCupertinoDialog<String>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        backgroundColor: darkGrey,
+        title: Text(
+          title,
+          style: TextStyle(color: mainYellow, fontSize: 20),
+        ),
+        content: Text(
+          content,
+          style: const TextStyle(fontSize: 15),
+        ),
+        actions: <Widget>[
+          TextButton(
+            style: ButtonStyle(
+                backgroundColor: WidgetStatePropertyAll(mainYellow)),
+            onPressed: () => Navigator.pop(context, 'OK'),
+            child: Text(
+              'OK',
+              style: TextStyle(color: darkGrey),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void checkConnectionFunc() async {
     wifiName = await info.getWifiName();
 
-    if (wifiName != null) {
-      if (wifiName!.contains('Roof')) {
-        setState(() {
-          conStsFlag = true;
-        });
-        snackBar(context, 'Connected to Robot');
-        await tcpConnect();
-      } else {
-        snackBar(context, 'Please Connect to Wi-Fi before.');
-      }
-    } else {
-      snackBar(context, 'Please Connect to Wi-Fi before.');
-    }
+    // if (wifiName != null) {
+    //   if (wifiName!.contains('Roof')) {
+    setState(() {
+      conStsFlag = true;
+    });
+    snackBar(context, 'Connected to Robot');
+    await tcpConnect();
+    //   } else {
+    //     snackBar(context, 'Please Connect to Wi-Fi before.');
+    //   }
+    // } else {
+    //   snackBar(context, 'Please Connect to Wi-Fi before.');
+    // }
   }
 
   Future<void> tcpConnect() async {
@@ -892,26 +929,56 @@ class _ControlPageState extends State<ControlPage> {
     });
   }
 
+  Future<void> createFolder() async {
+    final bool granted = await Permission.manageExternalStorage.isGranted;
+    if (!granted) {
+      await Permission.manageExternalStorage.request();
+      snackBar(context, 'Please give permission.');
+    } else {
+      final workPackagePath =
+          Directory("/storage/emulated/0/${workPackage.workPackage}");
+      final taskPath = Directory(
+          "/storage/emulated/0/${workPackage.workPackage}/${workPackage.taskName}");
+      final phtPath = Directory(
+          "/storage/emulated/0/${workPackage.workPackage}/${workPackage.taskName}/pictures");
+      final videosPath = Directory(
+          "/storage/emulated/0/${workPackage.workPackage}/${workPackage.taskName}/videos");
+      if ((await workPackagePath.exists())) {
+        pathOfWp = workPackagePath.path;
+      } else {
+        workPackagePath.create();
+        pathOfWp = workPackagePath.path;
+      }
+      if ((await taskPath.exists())) {
+        pathOfTask = taskPath.path;
+      } else {
+        taskPath.create();
+        pathOfTask = taskPath.path;
+      }
+      if ((await phtPath.exists())) {
+        pathOfPhotos = phtPath.path;
+      } else {
+        phtPath.create();
+        pathOfPhotos = phtPath.path;
+      }
+      if ((await videosPath.exists())) {
+        pathOfVideos = videosPath.path;
+      } else {
+        videosPath.create();
+        pathOfVideos = videosPath.path;
+      }
+    }
+  }
+
+  Future<void> savePhoto() async {
+    File('$pathOfPhotos/${DateTime.now().year}_${DateTime.now().month}_${DateTime.now().day}-${DateTime.now().hour}.${DateTime.now().minute}.${DateTime.now().second}.jpg')
+        .writeAsBytes(receivedData);
+  }
+
   String packageSend() {
     handleRobotTurn();
     return dataRx =
         '${conStsFlag == true ? 1 : 0}${realY.isNegative ? 0 : 1}$rightMotor$leftMotor';
-  }
-
-  void camUpDownFunc(DragEndDetails details, BuildContext context) {
-    if (details.primaryVelocity! > 0) {
-      snackBar(context, 'Camera is being turned to the up');
-    } else if (details.primaryVelocity! < 0) {
-      snackBar(context, 'Camera is being turned to the down');
-    }
-  }
-
-  void camLeftRightFunc(DragEndDetails details, BuildContext context) {
-    if (details.primaryVelocity! > 0) {
-      snackBar(context, 'Camera is being turned to the left');
-    } else if (details.primaryVelocity! < 0) {
-      snackBar(context, 'Camera is being turned to the right');
-    }
   }
 
   void handleRobotTurn() {

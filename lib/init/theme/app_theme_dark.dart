@@ -6,7 +6,6 @@ ThemeData appTheme(BuildContext context) {
     cardTheme: const CardTheme(
       elevation: 3,
     ),
-    brightness: Brightness.dark,
     ///////////////////////////
     elevatedButtonTheme: const ElevatedButtonThemeData(
       style: ButtonStyle(
