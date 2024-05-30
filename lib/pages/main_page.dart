@@ -5,16 +5,18 @@ import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:syncfusion_flutter_sliders/sliders.dart';
+import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
 import 'package:flutter_joystick/flutter_joystick.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:network_info_plus/network_info_plus.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:syncfusion_flutter_sliders/sliders.dart';
+
 import 'package:roffinspection/Models/models.dart';
 import 'package:roffinspection/constants/asset_extension.dart';
 import 'package:roffinspection/constants/coctext_extension.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:network_info_plus/network_info_plus.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class ControlPage extends StatefulWidget {
   const ControlPage({super.key});
@@ -33,6 +35,8 @@ class _ControlPageState extends State<ControlPage> {
           'Please type workpackage and task names before navigating to app');
       ipTextController.text = '192.168.1.160';
       portTextController.text = '8088';
+      workPackageTextController.text = 'ahmet';
+      taskTextController.text = 'mehmet';
     });
 
     super.initState();
@@ -44,6 +48,7 @@ class _ControlPageState extends State<ControlPage> {
   }
 
   /////////////////////////////////////////////////////////////////////////
+  final FlutterFFmpeg fFmpeg = FlutterFFmpeg();
   final info = NetworkInfo();
   String? wifiName;
   ///////////////////////////////////Text Controllers//////////////////////
@@ -69,6 +74,7 @@ class _ControlPageState extends State<ControlPage> {
   late Socket socket;
   bool conStsFlag = false;
   Uint8List receivedData = Uint8List(0);
+  List<Uint8List> videoData = [];
   /////////////////////////////////////////////////////////////////////////
   String streamingCamData = '';
   List<String> dataList = [];
@@ -83,6 +89,7 @@ class _ControlPageState extends State<ControlPage> {
   String pathOfTask = '';
   String pathOfPhotos = '';
   String pathOfVideos = '';
+  bool rcrdFlag = false;
   /////////////////////////////////////////////////////////////////////////
 
   @override
@@ -374,6 +381,7 @@ class _ControlPageState extends State<ControlPage> {
               border: Border.all(color: mainYellow)),
           child: ElevatedButton(
             onPressed: () {
+              rcrdFlag = true;
               snackBar(context, 'Video Recording has started');
             },
             child: Row(
@@ -409,7 +417,8 @@ class _ControlPageState extends State<ControlPage> {
               border: Border.all(color: mainYellow)),
           child: ElevatedButton(
             onPressed: () {
-              snackBar(context, 'Video Recording has stoped');
+              stopRcrdSaveVideo();
+              snackBar(context, 'Video Recording has stoped and video saved.');
             },
             child: Row(
               children: [
@@ -899,6 +908,9 @@ class _ControlPageState extends State<ControlPage> {
           setState(() {});
           tcpReconnect();
           receivedData = base64Decode(streamingCamData);
+          if (rcrdFlag == true) {
+            videoData.add(receivedData);
+          }
         }
         streamingCamData = '';
       },
@@ -930,6 +942,8 @@ class _ControlPageState extends State<ControlPage> {
   }
 
   Future<void> createFolder() async {
+    Directory? dir = await getExternalStorageDirectory();
+    print(dir!.path);
     final bool granted = await Permission.manageExternalStorage.isGranted;
     if (!granted) {
       await Permission.manageExternalStorage.request();
@@ -973,6 +987,36 @@ class _ControlPageState extends State<ControlPage> {
   Future<void> savePhoto() async {
     File('$pathOfPhotos/${DateTime.now().year}_${DateTime.now().month}_${DateTime.now().day}-${DateTime.now().hour}.${DateTime.now().minute}.${DateTime.now().second}.jpg')
         .writeAsBytes(receivedData);
+  }
+
+  Future<void> stopRcrdSaveVideo() async {
+    rcrdFlag = false;
+
+    String outputVideoPath =
+        '$pathOfVideos/${DateTime.now().year}_${DateTime.now().month}_${DateTime.now().day}-${DateTime.now().hour}.${DateTime.now().minute}.${DateTime.now().second}.mp4';
+
+    List<String> tempFilePaths = [];
+
+    for (int i = 0; i < videoData.length; i++) {
+      String tempFilePath = '$pathOfVideos/$i.jpg';
+      await File(tempFilePath).writeAsBytes(videoData[i]);
+      tempFilePaths.add(tempFilePath);
+    }
+    String command =
+        '-framerate 10 -i $pathOfVideos/%d.jpg -vf "scale=1280:900,unsharp=luma_msize_x=7:luma_msize_y=7:luma_amount=1.5" -vcodec mpeg4 -b:v 8000k -pix_fmt yuv420p -r 60 -threads 4 -refs 1 -bf 0 -coder 0 -g 15 -keyint_min 15 -movflags +faststart $outputVideoPath';
+
+    int returnCode = await fFmpeg.execute(command);
+    if (returnCode == 0) {
+      print('Video oluşturuldu: $outputVideoPath');
+      videoData.clear();
+    } else {
+      print('Hata: Video oluşturulamadı.');
+      videoData.clear();
+    }
+    // Geçici dosyaları temizleyin
+    for (String tempFilePath in tempFilePaths) {
+      File(tempFilePath).deleteSync();
+    }
   }
 
   String packageSend() {
