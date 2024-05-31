@@ -861,6 +861,7 @@ class _ControlPageState extends State<ControlPage> {
 
   void checkConnectionFunc() async {
     wifiName = await info.getWifiName();
+    print(wifiName);
 
     // if (wifiName != null) {
     //   if (wifiName!.contains('Roof')) {
@@ -870,10 +871,12 @@ class _ControlPageState extends State<ControlPage> {
     snackBar(context, 'Connected to Robot');
     await tcpConnect();
     //   } else {
-    //     snackBar(context, 'Please Connect to Wi-Fi before.');
+    //    alertDialog('Connect to Wi-Fi',
+    //    'Please connect to Roof Inspector Wi-Fi before connect with app.');
     //   }
     // } else {
-    //   snackBar(context, 'Please Connect to Wi-Fi before.');
+    //    alertDialog('Connect to Wi-Fi',
+    //    'Please connect to Roof Inspector Wi-Fi before connect with app.');
     // }
   }
 
@@ -942,8 +945,6 @@ class _ControlPageState extends State<ControlPage> {
   }
 
   Future<void> createFolder() async {
-    Directory? dir = await getExternalStorageDirectory();
-    print(dir!.path);
     final bool granted = await Permission.manageExternalStorage.isGranted;
     if (!granted) {
       await Permission.manageExternalStorage.request();
@@ -985,8 +986,9 @@ class _ControlPageState extends State<ControlPage> {
   }
 
   Future<void> savePhoto() async {
-    File('$pathOfPhotos/${DateTime.now().year}_${DateTime.now().month}_${DateTime.now().day}-${DateTime.now().hour}.${DateTime.now().minute}.${DateTime.now().second}.jpg')
-        .writeAsBytes(receivedData);
+    String outputPhotoPath =
+        '$pathOfPhotos/${DateTime.now().year}_${DateTime.now().month}_${DateTime.now().day}-${DateTime.now().hour}.${DateTime.now().minute}.${DateTime.now().second}.jpg';
+    File(outputPhotoPath).writeAsBytes(receivedData);
   }
 
   Future<void> stopRcrdSaveVideo() async {
@@ -1003,14 +1005,15 @@ class _ControlPageState extends State<ControlPage> {
       tempFilePaths.add(tempFilePath);
     }
     String command =
-        '-framerate 10 -i $pathOfVideos/%d.jpg -vf "scale=1280:900,unsharp=luma_msize_x=7:luma_msize_y=7:luma_amount=1.5" -vcodec mpeg4 -b:v 8000k -pix_fmt yuv420p -r 60 -threads 4 -refs 1 -bf 0 -coder 0 -g 15 -keyint_min 15 -movflags +faststart $outputVideoPath';
+        '-framerate 10 -i $pathOfVideos/%d.jpg -vf "scale=1280:900,unsharp=luma_msize_x=7:luma_msize_y=7:luma_amount=1.5" -vcodec mpeg4 -b:v 5000k -pix_fmt yuv420p -r 60 -threads 4 -refs 1 -bf 0 -coder 0 -g 60 -keyint_min 15 -movflags +faststart $outputVideoPath';
 
     int returnCode = await fFmpeg.execute(command);
     if (returnCode == 0) {
-      print('Video oluşturuldu: $outputVideoPath');
+      snackBar(context,
+          'The video created and saved to ${taskTextController.text}/Videos folder');
       videoData.clear();
     } else {
-      print('Hata: Video oluşturulamadı.');
+      snackBar(context, 'An error occured while video creating.');
       videoData.clear();
     }
     // Geçici dosyaları temizleyin
