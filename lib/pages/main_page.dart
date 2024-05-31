@@ -3,17 +3,16 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:android_intent/android_intent.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
+import 'package:flutter_internet_signal/flutter_internet_signal.dart';
 import 'package:flutter_joystick/flutter_joystick.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:network_info_plus/network_info_plus.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:syncfusion_flutter_sliders/sliders.dart';
-
 import 'package:roffinspection/Models/models.dart';
 import 'package:roffinspection/constants/asset_extension.dart';
 import 'package:roffinspection/constants/coctext_extension.dart';
@@ -25,10 +24,23 @@ class ControlPage extends StatefulWidget {
   State<ControlPage> createState() => _ControlPageState();
 }
 
-class _ControlPageState extends State<ControlPage> {
+class _ControlPageState extends State<ControlPage>
+    with TickerProviderStateMixin {
+  /////////////////////////////////////////
   late WorkPackageClass workPackage;
+  late AnimationController _controller;
+  late Animation<double> _animation;
+  /////////////////////////////////////////
   @override
   void initState() {
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    )..repeat(reverse: true);
+    _animation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeIn,
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       workPackageModalPopUp();
       alertDialog('Type Names',
@@ -42,12 +54,8 @@ class _ControlPageState extends State<ControlPage> {
     super.initState();
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
   /////////////////////////////////////////////////////////////////////////
+  final FlutterInternetSignal internetSignal = FlutterInternetSignal();
   final FlutterFFmpeg fFmpeg = FlutterFFmpeg();
   final info = NetworkInfo();
   String? wifiName;
@@ -75,10 +83,7 @@ class _ControlPageState extends State<ControlPage> {
   bool conStsFlag = false;
   Uint8List receivedData = Uint8List(0);
   List<Uint8List> videoData = [];
-  /////////////////////////////////////////////////////////////////////////
   String streamingCamData = '';
-  List<String> dataList = [];
-  List<String> camDataList = [];
   /////////////////////////////////////////////////////////////////////////
   String dataRx = '';
   /////////////////////////////////////////////////////////////////////////
@@ -91,7 +96,8 @@ class _ControlPageState extends State<ControlPage> {
   String pathOfVideos = '';
   bool rcrdFlag = false;
   /////////////////////////////////////////////////////////////////////////
-
+  late final int? dBm;
+  /////////////////////////////////////////////////////////////////////////
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -227,10 +233,7 @@ class _ControlPageState extends State<ControlPage> {
       ),
       ElevatedButton(
         onPressed: () {},
-        child: Icon(
-          Icons.network_wifi_3_bar_outlined,
-          color: mainYellow,
-        ),
+        child: buildSignalIcon(),
       ),
       SizedBox(
         height: context.customHeigthValue(0.02),
@@ -296,57 +299,77 @@ class _ControlPageState extends State<ControlPage> {
                 ),
               ),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            Stack(
               children: [
-                SizedBox(
-                  height: context.customHeigthValue(0.65),
-                  width: context.customWidthValue(0.03),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      height: context.customHeigthValue(0.65),
+                      width: context.customWidthValue(0.03),
+                    ),
+                    SizedBox(
+                      height: context.customHeigthValue(0.65),
+                      width: context.customWidthValue(0.65),
+                      child: Padding(
+                        padding: const EdgeInsets.all(3.0),
+                        child: ClipRRect(
+                            borderRadius: BorderRadius.circular(50),
+                            child: conStsFlag && receivedData.isNotEmpty
+                                ? Image.memory(
+                                    gaplessPlayback: true,
+                                    receivedData,
+                                    fit: BoxFit.fill,
+                                  )
+                                : Image(
+                                    image: AssetImage('damaged_roof'.toJpg),
+                                    fit: BoxFit.fill,
+                                  )),
+                      ),
+                    ),
+                    SizedBox(
+                      height: context.customHeigthValue(0.65),
+                      width: context.customWidthValue(0.03),
+                      child: SfSlider.vertical(
+                        min: 0.0,
+                        max: 180.0,
+                        activeColor: mainYellow,
+                        inactiveColor: const Color.fromARGB(255, 91, 73, 20),
+                        value: verSliderValue,
+                        interval: 180,
+                        minorTicksPerInterval: 1,
+                        onChanged: (dynamic value) {
+                          setState(() {
+                            if (value > 85 && value < 95) {
+                              value = 90;
+                            } else if (value > 0 && value < 5) {
+                              value = 0;
+                            } else if (value > 175) {
+                              value = 180;
+                            }
+                            verSliderValue = value;
+                          });
+                        },
+                      ),
+                    )
+                  ],
                 ),
-                SizedBox(
-                  height: context.customHeigthValue(0.65),
-                  width: context.customWidthValue(0.65),
-                  child: Padding(
-                    padding: const EdgeInsets.all(3.0),
-                    child: ClipRRect(
-                        borderRadius: BorderRadius.circular(50),
-                        child: conStsFlag && receivedData.isNotEmpty
-                            ? Image.memory(
-                                gaplessPlayback: true,
-                                receivedData,
-                                fit: BoxFit.fill,
-                              )
-                            : Image(
-                                image: AssetImage('damaged_roof'.toJpg),
-                                fit: BoxFit.fill,
-                              )),
+                if (rcrdFlag && conStsFlag)
+                  Positioned(
+                    top: context.customHeigthValue(0.04),
+                    left: context.customWidthValue(0.20),
+                    child: FadeTransition(
+                      opacity: _animation,
+                      child: Container(
+                        width: 16.0,
+                        height: 16.0,
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                SizedBox(
-                  height: context.customHeigthValue(0.65),
-                  width: context.customWidthValue(0.03),
-                  child: SfSlider.vertical(
-                    min: 0.0,
-                    max: 180.0,
-                    activeColor: mainYellow,
-                    inactiveColor: const Color.fromARGB(255, 91, 73, 20),
-                    value: verSliderValue,
-                    interval: 180,
-                    minorTicksPerInterval: 1,
-                    onChanged: (dynamic value) {
-                      setState(() {
-                        if (value > 85 && value < 95) {
-                          value = 90;
-                        } else if (value > 0 && value < 5) {
-                          value = 0;
-                        } else if (value > 175) {
-                          value = 180;
-                        }
-                        verSliderValue = value;
-                      });
-                    },
-                  ),
-                )
               ],
             ),
             SizedBox(
@@ -381,8 +404,10 @@ class _ControlPageState extends State<ControlPage> {
               border: Border.all(color: mainYellow)),
           child: ElevatedButton(
             onPressed: () {
-              rcrdFlag = true;
-              snackBar(context, 'Video Recording has started');
+              if (conStsFlag) {
+                rcrdFlag = true;
+                snackBar(context, 'Video Recording has started');
+              }
             },
             child: Row(
               children: [
@@ -417,8 +442,10 @@ class _ControlPageState extends State<ControlPage> {
               border: Border.all(color: mainYellow)),
           child: ElevatedButton(
             onPressed: () {
-              stopRcrdSaveVideo();
-              snackBar(context, 'Video Recording has stoped and video saved.');
+              if (conStsFlag) {
+                stopRcrdSaveVideo();
+                snackBar(context, 'Video recording has stoped.');
+              }
             },
             child: Row(
               children: [
@@ -453,8 +480,10 @@ class _ControlPageState extends State<ControlPage> {
               border: Border.all(color: mainYellow)),
           child: ElevatedButton(
             onPressed: () {
-              savePhoto();
-              snackBar(context, 'Photo has been taken and saved.');
+              if (conStsFlag) {
+                savePhoto();
+                snackBar(context, 'Photo has been taken and saved.');
+              }
             },
             child: Row(
               children: [
@@ -644,7 +673,6 @@ class _ControlPageState extends State<ControlPage> {
                                       taskName: taskTextController.text);
                                   if (workPackage.workPackage != '' &&
                                       workPackage.taskName != '') {
-                                    snackBar(context, 'Work package is saved');
                                     createFolder();
                                     Navigator.pop(context, 'OK');
                                   } else {
@@ -859,34 +887,62 @@ class _ControlPageState extends State<ControlPage> {
     );
   }
 
+  void alertDialogOpenWiFi(String title, String content) {
+    showCupertinoDialog<String>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        backgroundColor: darkGrey,
+        title: Text(
+          title,
+          style: TextStyle(color: mainYellow, fontSize: 20),
+        ),
+        content: Text(
+          content,
+          style: const TextStyle(fontSize: 15),
+        ),
+        actions: <Widget>[
+          TextButton(
+            style: ButtonStyle(
+                backgroundColor: WidgetStatePropertyAll(mainYellow)),
+            onPressed: () {
+              Navigator.pop(context, 'OK');
+              openWiFiSettings();
+            },
+            child: Text(
+              'OK',
+              style: TextStyle(color: darkGrey),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void checkConnectionFunc() async {
     wifiName = await info.getWifiName();
-    print(wifiName);
 
-    // if (wifiName != null) {
-    //   if (wifiName!.contains('Roof')) {
-    setState(() {
-      conStsFlag = true;
-    });
-    snackBar(context, 'Connected to Robot');
-    await tcpConnect();
-    //   } else {
-    //    alertDialog('Connect to Wi-Fi',
-    //    'Please connect to Roof Inspector Wi-Fi before connect with app.');
-    //   }
-    // } else {
-    //    alertDialog('Connect to Wi-Fi',
-    //    'Please connect to Roof Inspector Wi-Fi before connect with app.');
-    // }
+    if (wifiName != null) {
+      if (wifiName!.contains('Roof')) {
+        setState(() {
+          conStsFlag = true;
+        });
+        snackBar(context, 'Connected to Robot');
+        await tcpConnect();
+      } else {
+        alertDialogOpenWiFi('Connect to Wi-Fi',
+            'Please connect to Roof Inspector Wi-Fi before connect with app.');
+      }
+    } else {
+      alertDialogOpenWiFi('Connect to Wi-Fi',
+          'Please connect to Roof Inspector Wi-Fi before connect with app.');
+    }
   }
 
   Future<void> tcpConnect() async {
-    String ip = ipTextController.text;
-    String port = portTextController.text;
     try {
       socket = await Socket.connect(
-        ip,
-        int.parse(port),
+        ipTextController.text,
+        int.parse(portTextController.text),
         timeout: const Duration(seconds: 10),
       );
       socket.add(utf8.encode('1\n'));
@@ -903,14 +959,15 @@ class _ControlPageState extends State<ControlPage> {
     socket.listen(
       (Uint8List event) {
         streamingCamData += utf8.decode(event);
-        streamingCamData =
-            streamingCamData.replaceAll(RegExp(r'[^A-Za-z0-9+/=]'), '');
       },
       onDone: () {
         if (conStsFlag) {
-          setState(() {});
+          setState(() {
+            streamingCamData =
+                streamingCamData.replaceAll(RegExp(r'[^A-Za-z0-9+/=]'), '');
+            receivedData = base64Decode(streamingCamData);
+          });
           tcpReconnect();
-          receivedData = base64Decode(streamingCamData);
           if (rcrdFlag == true) {
             videoData.add(receivedData);
           }
@@ -945,10 +1002,18 @@ class _ControlPageState extends State<ControlPage> {
   }
 
   Future<void> createFolder() async {
-    final bool granted = await Permission.manageExternalStorage.isGranted;
-    if (!granted) {
-      await Permission.manageExternalStorage.request();
+    final bool strorageGranted = await Permission.storage.isGranted;
+    final bool locationGranted = await Permission.location.isGranted;
+
+    if (!locationGranted) {
+      await Permission.location.request();
       snackBar(context, 'Please give permission.');
+    } else {
+      wifiName = await info.getWifiName();
+    }
+    if (!strorageGranted) {
+      snackBar(context, 'Please give permission.');
+      await Permission.storage.request();
     } else {
       final workPackagePath =
           Directory("/storage/emulated/0/${workPackage.workPackage}");
@@ -982,6 +1047,7 @@ class _ControlPageState extends State<ControlPage> {
         videosPath.create();
         pathOfVideos = videosPath.path;
       }
+      snackBar(context, 'Work package is saved');
     }
   }
 
@@ -1005,12 +1071,12 @@ class _ControlPageState extends State<ControlPage> {
       tempFilePaths.add(tempFilePath);
     }
     String command =
-        '-framerate 10 -i $pathOfVideos/%d.jpg -vf "scale=1280:900,unsharp=luma_msize_x=7:luma_msize_y=7:luma_amount=1.5" -vcodec mpeg4 -b:v 5000k -pix_fmt yuv420p -r 60 -threads 4 -refs 1 -bf 0 -coder 0 -g 60 -keyint_min 15 -movflags +faststart $outputVideoPath';
+        '-framerate 8 -i $pathOfVideos/%d.jpg -vf "scale=1280:900,unsharp=luma_msize_x=7:luma_msize_y=7:luma_amount=1.5" -vcodec mpeg4 -b:v 5000k -pix_fmt yuv420p -r 30 -threads 3 -refs 1 -bf 0 -coder 0 -g 60 -keyint_min 15 -movflags +faststart $outputVideoPath';
 
     int returnCode = await fFmpeg.execute(command);
     if (returnCode == 0) {
       snackBar(context,
-          'The video created and saved to ${taskTextController.text}/Videos folder');
+          'The video created and saved to ${workPackageTextController.text}/${taskTextController.text}/Videos folder');
       videoData.clear();
     } else {
       snackBar(context, 'An error occured while video creating.');
@@ -1036,5 +1102,39 @@ class _ControlPageState extends State<ControlPage> {
       leftMotor = (realY.abs() - (realX / 1.5).abs()).abs();
       rightMotor = realY.abs();
     }
+  }
+
+  Future<void> openWiFiSettings() async {
+    const AndroidIntent intent = AndroidIntent(
+      action: 'android.settings.WIFI_SETTINGS',
+    );
+    await intent.launch();
+  }
+
+  Future<Widget?> getSignalIcon() async {
+    int? dBm = await internetSignal.getWifiSignalStrength();
+    if (dBm != null) {
+      if (dBm >= -50) {
+        return Icon(Icons.signal_wifi_statusbar_4_bar_outlined,
+            color: mainYellow);
+      } else if (dBm >= -62) {
+        return Icon(Icons.network_wifi_3_bar_rounded, color: mainYellow);
+      } else if (dBm >= -75) {
+        return Icon(Icons.network_wifi_2_bar_rounded, color: mainYellow);
+      } else {
+        return Icon(Icons.network_wifi_1_bar_outlined, color: mainYellow);
+      }
+    } else {
+      return Icon(Icons.signal_wifi_bad_outlined, color: mainYellow);
+    }
+  }
+
+  Widget buildSignalIcon() {
+    return FutureBuilder<Widget?>(
+      future: getSignalIcon(),
+      builder: (context, snapshot) {
+        return snapshot.data ?? Container();
+      },
+    );
   }
 }
