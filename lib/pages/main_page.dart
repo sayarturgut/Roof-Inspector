@@ -33,6 +33,7 @@ class _ControlPageState extends State<ControlPage>
   /////////////////////////////////////////
   @override
   void initState() {
+    /////////////////Recording dot animation defs.////////////////////////////
     _controller = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
@@ -45,6 +46,7 @@ class _ControlPageState extends State<ControlPage>
       workPackageModalPopUp();
       alertDialog('Type Names',
           'Please type workpackage and task names before navigating to app');
+      ///////////////Default ip, port, wp, task names for easy devolopment////
       ipTextController.text = '192.168.1.160';
       portTextController.text = '8088';
       workPackageTextController.text = 'ahmet';
@@ -54,48 +56,54 @@ class _ControlPageState extends State<ControlPage>
     super.initState();
   }
 
-  /////////////////////////////////////////////////////////////////////////
+  ///////////////////Package Definitions//////////////////////////////////////
   final FlutterInternetSignal internetSignal = FlutterInternetSignal();
   final FlutterFFmpeg fFmpeg = FlutterFFmpeg();
   final info = NetworkInfo();
   String? wifiName;
-  ///////////////////////////////////Text Controllers//////////////////////
+  ///////////////////Text Controllers/////////////////////////////////////////
   final ipTextController = TextEditingController();
   final portTextController = TextEditingController();
   final workPackageTextController = TextEditingController();
   final taskTextController = TextEditingController();
-  ///////////////////////////////////Colors////////////////////////////////
+  ///////////////////Colors///////////////////////////////////////////////////
   final Color mainYellow = const Color.fromARGB(255, 255, 204, 51);
   final Color mainGrey = const Color.fromARGB(255, 76, 68, 68);
   final Color darkGrey = const Color.fromARGB(255, 29, 27, 32);
-  ///////////////////////////////////joystick vars.////////////////////////
-  double _y = 0;
-  double oldY = 0;
-  double realY = 0;
-  double _x = 0;
-  double oldX = 0;
-  double realX = 0;
-  double leftMotor = 0;
-  double rightMotor = 0;
-  double step = 10.1;
-  /////////////////////////////////////////////////////////////////////////
+  ///////////////////joystick veriables///////////////////////////////////////
+  double _left = 0;
+  double oldLeft = 0;
+  double realLeft = 0;
+  double _right = 0;
+  double oldRight = 0;
+  double realRight = 0;
+  double step = 255.1;
+  ///////////////////Motors veriables/////////////////////////////////////////
+  int leftMotor = 0;
+  int rightMotor = 0;
+  int leftMotorInt = 0;
+  int rightMotorInt = 0;
+  ///////////////////Socket and camera veriables//////////////////////////////
   late Socket socket;
   bool conStsFlag = false;
   Uint8List receivedData = Uint8List(0);
   List<Uint8List> videoData = [];
   String streamingCamData = '';
-  /////////////////////////////////////////////////////////////////////////
+  bool flashStsFlag = false;
+  ////////////////////Data will send//////////////////////////////////////////
   String dataRx = '';
-  /////////////////////////////////////////////////////////////////////////
+  ///////////////////Slider initial Values////////////////////////////////////
   double horSliderValue = 90;
   dynamic verSliderValue = 90;
-  /////////////////////////////////////////////////////////////////////////
+  int verSliderValueInt = 90;
+  int horSliderValueInt = 90;
+  ///////////////////Folder parhs/////////////////////////////////////////////
   String pathOfWp = '';
   String pathOfTask = '';
   String pathOfPhotos = '';
   String pathOfVideos = '';
   bool rcrdFlag = false;
-  /////////////////////////////////////////////////////////////////////////
+  //////////////////Wi-Fi singal streght veriable/////////////////////////////
   late final int? dBm;
   /////////////////////////////////////////////////////////////////////////
   @override
@@ -240,23 +248,32 @@ class _ControlPageState extends State<ControlPage>
         width: context.customWidthValue(0.02),
       ),
       ElevatedButton(
-        onPressed: () {},
+        onPressed: () {
+          if (conStsFlag) {
+            flashStsFlag = !flashStsFlag;
+          }
+        },
         child: Row(
           children: [
-            Text(
-              '%75',
-              style: GoogleFonts.openSans(
-                textStyle:
-                    TextStyle(color: mainYellow, fontWeight: FontWeight.bold),
-              ),
-            ),
+            flashStsFlag
+                ? Icon(
+                    Icons.flash_on_outlined,
+                    color: mainYellow,
+                  )
+                : Icon(
+                    Icons.flash_off_outlined,
+                    color: mainYellow,
+                  ),
             SizedBox(
               height: context.customHeigthValue(0.005),
               width: context.customWidthValue(0.005),
             ),
-            Icon(
-              Icons.battery_5_bar_outlined,
-              color: mainYellow,
+            Text(
+              'Flash',
+              style: GoogleFonts.openSans(
+                textStyle:
+                    TextStyle(color: mainYellow, fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         ),
@@ -294,6 +311,7 @@ class _ControlPageState extends State<ControlPage>
                         value = 180;
                       }
                       horSliderValue = value;
+                      horSliderValueInt = horSliderValue.round();
                     });
                   },
                 ),
@@ -318,6 +336,8 @@ class _ControlPageState extends State<ControlPage>
                             child: conStsFlag && receivedData.isNotEmpty
                                 ? Image.memory(
                                     gaplessPlayback: true,
+                                    filterQuality: FilterQuality.high,
+                                    colorBlendMode: BlendMode.screen,
                                     receivedData,
                                     fit: BoxFit.fill,
                                   )
@@ -348,6 +368,7 @@ class _ControlPageState extends State<ControlPage>
                               value = 180;
                             }
                             verSliderValue = value;
+                            verSliderValueInt = (value as num).toInt();
                           });
                         },
                       ),
@@ -559,22 +580,22 @@ class _ControlPageState extends State<ControlPage>
           Joystick(
             mode: JoystickMode.vertical,
             listener: (details) {
-              _y = _y + (step * details.y);
-              realY = -(_y - oldY);
-              realY.toInt();
-              oldY = _y;
+              _left = _left + (step * details.y);
+              realLeft = -(_left - oldLeft);
+              oldLeft = _left;
+              leftMotorInt = realLeft.round();
             },
           ),
           SizedBox(
             width: context.customWidthValue(0.7),
           ),
           Joystick(
-            mode: JoystickMode.horizontal,
-            listener: (details) {
-              _x = _x + (step * details.x);
-              realX = -(_x - oldX);
-              realX.toInt();
-              oldX = _x;
+            mode: JoystickMode.vertical,
+            listener: (detailsRight) {
+              _right = _right + (step * detailsRight.y);
+              realRight = -(_right - oldRight);
+              oldRight = _right;
+              rightMotorInt = realRight.round();
             },
           ),
         ],
@@ -945,7 +966,8 @@ class _ControlPageState extends State<ControlPage>
         int.parse(portTextController.text),
         timeout: const Duration(seconds: 10),
       );
-      socket.add(utf8.encode('1\n'));
+      socket.add(utf8.encode(
+          'BB*${conStsFlag == true ? 1 : 0}*$rightMotorInt*$leftMotorInt*$horSliderValueInt*$verSliderValueInt*${flashStsFlag == true ? 1 : 0}*CC\n'));
       takeAndPushDataFunc();
     } catch (error) {
       socket.close();
@@ -1004,7 +1026,6 @@ class _ControlPageState extends State<ControlPage>
   Future<void> createFolder() async {
     final bool strorageGranted = await Permission.storage.isGranted;
     final bool locationGranted = await Permission.location.isGranted;
-
     if (!locationGranted) {
       await Permission.location.request();
       snackBar(context, 'Please give permission.');
@@ -1088,21 +1109,31 @@ class _ControlPageState extends State<ControlPage>
     }
   }
 
-  String packageSend() {
-    handleRobotTurn();
-    return dataRx =
-        '${conStsFlag == true ? 1 : 0}${realY.isNegative ? 0 : 1}$rightMotor$leftMotor';
-  }
-
-  void handleRobotTurn() {
-    if (realX.isNegative) {
-      rightMotor = (realY.abs() - (realX / 1.5).abs()).abs();
-      leftMotor = realY.abs();
-    } else {
-      leftMotor = (realY.abs() - (realX / 1.5).abs()).abs();
-      rightMotor = realY.abs();
-    }
-  }
+  // void handleRobotTurn() {
+  //   if (realLeft == 0 && realRight == 0) {
+  //     leftMotor = 0; // stop
+  //     rightMotor = 0;
+  //   } else if (realRight == 0) {
+  //     leftMotor = leftMotorInt.abs(); // just go forward or backward
+  //     rightMotor = rightMotorInt.abs();
+  //   } else if (realLeft == 0) {
+  //     if (!realRight.isNegative) {
+  //       leftMotor = 0; // tank turn left
+  //       rightMotor = rightMotorInt.abs();
+  //     } else if (realRight.isNegative) {
+  //       leftMotor = rightMotorInt.abs(); // tank turn right
+  //       rightMotor = 0;
+  //     }
+  //   } else if (realRight.isNegative) {
+  //     leftMotor = leftMotorInt.abs();
+  //     rightMotor = (leftMotorInt.abs() - (rightMotorInt ~/ 1.5).abs()).abs();
+  //     // slow the right motor for turn right
+  //   } else if (!realRight.isNegative) {
+  //     leftMotor = (leftMotorInt.abs() - (rightMotorInt ~/ 1.5).abs())
+  //         .abs(); // slow the left motor for turn left
+  //     rightMotor = leftMotorInt.abs();
+  //   }
+  // }
 
   Future<void> openWiFiSettings() async {
     const AndroidIntent intent = AndroidIntent(
@@ -1113,18 +1144,24 @@ class _ControlPageState extends State<ControlPage>
 
   Future<Widget?> getSignalIcon() async {
     int? dBm = await internetSignal.getWifiSignalStrength();
-    if (dBm != null) {
-      if (dBm >= -50) {
-        return Icon(Icons.signal_wifi_statusbar_4_bar_outlined,
-            color: mainYellow);
-      } else if (dBm >= -62) {
-        return Icon(Icons.network_wifi_3_bar_rounded, color: mainYellow);
-      } else if (dBm >= -75) {
-        return Icon(Icons.network_wifi_2_bar_rounded, color: mainYellow);
+    if (conStsFlag) {
+      if (dBm != null) {
+        if (dBm >= -50) {
+          return Icon(Icons.signal_wifi_statusbar_4_bar_outlined,
+              color: mainYellow);
+        } else if (dBm >= -65) {
+          return Icon(Icons.network_wifi_3_bar_rounded, color: mainYellow);
+        } else if (dBm >= -80) {
+          return Icon(Icons.network_wifi_2_bar_rounded, color: mainYellow);
+        } else {
+          return Icon(Icons.network_wifi_1_bar_outlined, color: mainYellow);
+        }
       } else {
-        return Icon(Icons.network_wifi_1_bar_outlined, color: mainYellow);
+        setState(() {});
+        return Icon(Icons.signal_wifi_bad_outlined, color: mainYellow);
       }
     } else {
+      setState(() {});
       return Icon(Icons.signal_wifi_bad_outlined, color: mainYellow);
     }
   }
