@@ -49,8 +49,8 @@ class _ControlPageState extends State<ControlPage>
       ///////////////Default ip, port, wp, task names for easy devolopment////
       ipTextController.text = '192.168.1.160';
       portTextController.text = '8088';
-      workPackageTextController.text = 'ahmet';
-      taskTextController.text = 'mehmet';
+      workPackageTextController.text = 'Villa Roof';
+      taskTextController.text = 'Villa Roof Damage';
     });
 
     super.initState();
@@ -298,6 +298,7 @@ class _ControlPageState extends State<ControlPage>
                 child: Slider(
                   value: horSliderValue,
                   max: 180,
+                  min: 0.0,
                   divisions: 180,
                   activeColor: mainYellow,
                   inactiveColor: const Color.fromARGB(255, 91, 73, 20),
@@ -311,7 +312,7 @@ class _ControlPageState extends State<ControlPage>
                         value = 180;
                       }
                       horSliderValue = value;
-                      horSliderValueInt = horSliderValue.round();
+                      horSliderValueInt = 180 - horSliderValue.round();
                     });
                   },
                 ),
@@ -579,11 +580,11 @@ class _ControlPageState extends State<ControlPage>
           ),
           Joystick(
             mode: JoystickMode.vertical,
-            listener: (details) {
-              _left = _left + (step * details.y);
-              realLeft = -(_left - oldLeft);
-              oldLeft = _left;
-              leftMotorInt = realLeft.round();
+            listener: (detailsRight) {
+              _right = _right + (step * detailsRight.y);
+              realRight = -(_right - oldRight);
+              oldRight = _right;
+              rightMotorInt = realRight.round();
             },
           ),
           SizedBox(
@@ -591,11 +592,11 @@ class _ControlPageState extends State<ControlPage>
           ),
           Joystick(
             mode: JoystickMode.vertical,
-            listener: (detailsRight) {
-              _right = _right + (step * detailsRight.y);
-              realRight = -(_right - oldRight);
-              oldRight = _right;
-              rightMotorInt = realRight.round();
+            listener: (details) {
+              _left = _left + (step * details.y);
+              realLeft = -(_left - oldLeft);
+              oldLeft = _left;
+              leftMotorInt = realLeft.round();
             },
           ),
         ],
@@ -637,7 +638,7 @@ class _ControlPageState extends State<ControlPage>
                                   color: mainYellow,
                                 ),
                                 label: Text(
-                                  'Enter a Work Package Name',
+                                  'Work Order Name',
                                   style: GoogleFonts.openSans(
                                     textStyle: TextStyle(
                                       color: mainYellow,
@@ -663,7 +664,7 @@ class _ControlPageState extends State<ControlPage>
                                   color: mainYellow,
                                 ),
                                 label: Text(
-                                  'Enter a Task Name',
+                                  'Work Description',
                                   style: GoogleFonts.openSans(
                                     textStyle: TextStyle(
                                       color: mainYellow,
