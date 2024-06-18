@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:roffinspection/constants/asset_extension.dart';
-import 'package:roffinspection/constants/coctext_extension.dart';
+import 'package:roofinspecter/constants/asset_extension.dart';
+import 'package:roofinspecter/constants/coctext_extension.dart';
 
 import 'main_page.dart';
 
@@ -22,7 +22,7 @@ class SplashScreenState extends State<SplashScreen>
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 1), // Geçiş animasyonunun süresi
+      duration: const Duration(seconds: 1),
     );
 
     animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
@@ -53,9 +53,9 @@ class SplashScreenState extends State<SplashScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
-              'example_logo'.toPng,
-              width: context.customWidthValue(0.4),
-              height: context.customHeigthValue(0.4),
+              'example ai logo'.toPng,
+              width: context.customWidthValue(0.5),
+              height: context.customHeigthValue(0.5),
             )
           ],
         ),

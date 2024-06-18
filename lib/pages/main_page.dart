@@ -13,9 +13,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:syncfusion_flutter_sliders/sliders.dart';
-import 'package:roffinspection/Models/models.dart';
-import 'package:roffinspection/constants/asset_extension.dart';
-import 'package:roffinspection/constants/coctext_extension.dart';
+import 'package:roofinspecter/Models/models.dart';
+import 'package:roofinspecter/constants/asset_extension.dart';
+import 'package:roofinspecter/constants/coctext_extension.dart';
 
 class ControlPage extends StatefulWidget {
   const ControlPage({super.key});
@@ -103,6 +103,7 @@ class _ControlPageState extends State<ControlPage>
   String pathOfPhotos = '';
   String pathOfVideos = '';
   bool rcrdFlag = false;
+  bool lowPowerModeFlag = false;
   //////////////////Wi-Fi singal streght veriable/////////////////////////////
   late final int? dBm;
   /////////////////////////////////////////////////////////////////////////
@@ -131,7 +132,7 @@ class _ControlPageState extends State<ControlPage>
     return [
       SizedBox(
         height: context.customHeigthValue(0.02),
-        width: context.customWidthValue(0.01),
+        width: context.customWidthValue(0.005),
       ),
       conStsFlag == false
           ? ElevatedButton(
@@ -187,8 +188,8 @@ class _ControlPageState extends State<ControlPage>
               ),
             ),
       SizedBox(
-        height: context.customHeigthValue(0.02),
-        width: context.customWidthValue(0.02),
+        height: context.customHeigthValue(0.01),
+        width: context.customWidthValue(0.005),
       ),
       ElevatedButton(
         onPressed: () {
@@ -204,8 +205,8 @@ class _ControlPageState extends State<ControlPage>
         ),
       ),
       SizedBox(
-        height: context.customHeigthValue(0.02),
-        width: context.customWidthValue(0.06),
+        height: context.customHeigthValue(0.01),
+        width: context.customWidthValue(0.065),
       ),
       Center(
         child: AnimatedSize(
@@ -236,16 +237,16 @@ class _ControlPageState extends State<ControlPage>
         ),
       ),
       SizedBox(
-        height: context.customHeigthValue(0.02),
-        width: context.customWidthValue(0.065),
+        height: context.customHeigthValue(0.01),
+        width: context.customWidthValue(0.005),
       ),
       ElevatedButton(
         onPressed: () {},
         child: buildSignalIcon(),
       ),
       SizedBox(
-        height: context.customHeigthValue(0.02),
-        width: context.customWidthValue(0.02),
+        height: context.customHeigthValue(0.01),
+        width: context.customWidthValue(0.005),
       ),
       ElevatedButton(
         onPressed: () {
@@ -280,7 +281,59 @@ class _ControlPageState extends State<ControlPage>
       ),
       SizedBox(
         height: context.customHeigthValue(0.02),
-        width: context.customWidthValue(0.02),
+        width: context.customWidthValue(0.005),
+      ),
+      Container(
+        height: context.customHeigthValue(0.071),
+        width: context.customWidthValue(0.1),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(50),
+          color: const Color.fromARGB(255, 34, 34, 34),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(2),
+          child: AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.decelerate,
+            child: Row(
+              children: [
+                Switch(
+                  activeColor: mainYellow,
+                  inactiveThumbColor: Colors.black,
+                  activeTrackColor: Colors.black,
+                  inactiveTrackColor: Colors.black,
+                  thumbColor: WidgetStatePropertyAll(mainYellow),
+                  overlayColor: WidgetStatePropertyAll(mainYellow),
+                  trackOutlineColor: WidgetStatePropertyAll(mainYellow),
+                  value: lowPowerModeFlag,
+                  onChanged: (value) {
+                    setState(() {
+                      if (!lowPowerModeFlag && conStsFlag) {
+                        snackBar(context, 'Low Power Mode Enabled');
+                      }
+                      if (conStsFlag) {
+                        lowPowerModeFlag = value;
+                      }
+                    });
+                  },
+                ),
+                lowPowerModeFlag
+                    ? Icon(
+                        Icons.battery_saver_outlined,
+                        color: mainYellow,
+                      )
+                    : Icon(
+                        Icons.battery_charging_full_outlined,
+                        color: mainYellow,
+                      )
+              ],
+            ),
+          ),
+        ),
+      ),
+      SizedBox(
+        height: context.customHeigthValue(0.02),
+        width: context.customWidthValue(0.005),
       ),
     ];
   }
@@ -581,6 +634,15 @@ class _ControlPageState extends State<ControlPage>
           Joystick(
             mode: JoystickMode.vertical,
             listener: (detailsRight) {
+              if (lowPowerModeFlag) {
+                setState(() {
+                  step = 200;
+                });
+              } else {
+                setState(() {
+                  step = 255.1;
+                });
+              }
               _right = _right + (step * detailsRight.y);
               realRight = -(_right - oldRight);
               oldRight = _right;
@@ -593,6 +655,15 @@ class _ControlPageState extends State<ControlPage>
           Joystick(
             mode: JoystickMode.vertical,
             listener: (details) {
+              if (lowPowerModeFlag) {
+                setState(() {
+                  step = 200;
+                });
+              } else {
+                setState(() {
+                  step = 255.1;
+                });
+              }
               _left = _left + (step * details.y);
               realLeft = -(_left - oldLeft);
               oldLeft = _left;

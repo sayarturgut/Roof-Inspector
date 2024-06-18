@@ -1,7 +1,7 @@
-name: roffinspection
-description: "A new Flutter project."
+name: roofinspector
+description: "Roof Inspector Android App"
 
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: 'none' 
 
 version: 1.0.0+1
 
@@ -37,15 +37,10 @@ dev_dependencies:
 
 flutter:
 
-  # The following line ensures that the Material Icons font is
-  # included with your application, so that you can use the icons in
-  # the material Icons class.
   uses-material-design: true
   assets:
-    - assets/images/png/example_image.png
-    - assets/images/png/example_logo.png
-    - assets/images/png/example_image_cropped.png
+    - assets/images/png/example ai logo.png
     - assets/images/jpg/damaged_roof.jpg
-    
+
 
 
