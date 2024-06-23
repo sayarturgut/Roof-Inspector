@@ -13,9 +13,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:syncfusion_flutter_sliders/sliders.dart';
-import 'package:roofinspecter/Models/models.dart';
-import 'package:roofinspecter/constants/asset_extension.dart';
-import 'package:roofinspecter/constants/coctext_extension.dart';
+import 'package:roofinspector/Models/models.dart';
+import 'package:roofinspector/constants/asset_extension.dart';
+import 'package:roofinspector/constants/coctext_extension.dart';
 
 class ControlPage extends StatefulWidget {
   const ControlPage({super.key});
@@ -50,7 +50,7 @@ class _ControlPageState extends State<ControlPage>
       ipTextController.text = '192.168.1.160';
       portTextController.text = '8088';
       workPackageTextController.text = 'Villa Roof';
-      taskTextController.text = 'Villa Roof Damage';
+      taskTextController.text = 'Villa Roof Damage Day 1';
     });
 
     super.initState();
@@ -468,11 +468,8 @@ class _ControlPageState extends State<ControlPage>
 
   Row buttonSetRow(BuildContext context) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        SizedBox(
-          height: context.customHeigthValue(0.02),
-          width: context.customWidthValue(0.02),
-        ),
         Container(
           decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(30),
@@ -593,7 +590,9 @@ class _ControlPageState extends State<ControlPage>
               border: Border.all(color: mainYellow)),
           child: ElevatedButton(
             onPressed: () {
-              snackBar(context, 'The button will align');
+              workPackageModalPopUp();
+              alertDialog('Change Files Names',
+                  'You can change the files names by changing work order name and description');
             },
             child: Row(
               children: [

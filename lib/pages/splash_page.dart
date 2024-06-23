@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:roofinspecter/constants/asset_extension.dart';
-import 'package:roofinspecter/constants/coctext_extension.dart';
+import 'package:roofinspector/constants/asset_extension.dart';
+import 'package:roofinspector/constants/coctext_extension.dart';
 
 import 'main_page.dart';
 

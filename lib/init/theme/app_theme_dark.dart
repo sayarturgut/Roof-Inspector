@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:roofinspecter/constants/coctext_extension.dart';
+import 'package:roofinspector/constants/coctext_extension.dart';
 
 ThemeData appTheme(BuildContext context) {
   return ThemeData.dark().copyWith(
