@@ -1,16 +1,25 @@
-# roffinspection
+/**************************************************************************************************************************************************
 
-A new Flutter project.
+Project Name      : A mobile web-cam robot for roof inspection
+Writer            : Turgut Sayar, Yunus Berke Demirtaş, Begüm Çimenlidağ
+Advisor           : Asst. Prof. Dr. Gökhan Dındış
+Date              : June 2, 2024
+Description       : This project has been developed to enable easier observation of hard-to-reach areas. It includes a camera, 2 DC Motors for
+                    rover movement, and 2 servo motors for adjusting the camera angle. Communication is achieved via TCP/IP, with the rover
+                    operating as a client. Users can control the rover using an Android device with the specially developed Android application
+                    for this project. This project is part of the graduation project for the Electrical and Electronics Engineering Department at
+                    Eskişehir Osmangazi University.
 
-## Getting Started
+Hardware:
+  - ESP32-CAM module
+  - Two DC motors
+  - L298N motor driver
+  - Two servo motors
+  - Power supply
+  - Android device (API 29)
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Software:
+  - Arduino IDE 2.3.2
+  - Flutter SDK 3.22.0
+                  
+***************************************************************************************************************************************************/
